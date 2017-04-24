@@ -2,8 +2,6 @@ package users
 
 import (
 	"23333/account"
-	"23333/utilities"
-
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -14,20 +12,38 @@ type RegisterController struct {
 }
 
 func (c *RegisterController) Get() {
+	if c.GetSession("LoginUser") != nil {
+		fmt.Println("Logout current user to register")
+		c.DelSession("LoginUser")
+	}
 	c.TplName = "register/index.tpl"
 }
 
 func (c *RegisterController) Post() {
-	accountInfo := new(account.AccountInfo)
+	accountInfo := account.NewAccountInfo()
 	username := c.GetString("username")
 	password := c.GetString("password")
-	encryptor := utilities.NewSaultEncryptor("@!#!@", "12ws")
-	accountInfo.Password.SetPwd(password, username, encryptor)
+	mobile := c.GetString("mobile")
+	email := c.GetString("email")
+	accountInfo.Domain = "customer"
+	accountInfo.Ids[account.UserName.Name] = username
+	fmt.Println("UserName:" + username)
+	accountInfo.Ids[account.Mobile.Name] = mobile
+	fmt.Println("Mobile:" + mobile)
+	accountInfo.Ids[account.Email.Name] = email
+	fmt.Println("Email:" + email)
+
+	accountInfo.Password.SetPwd(password, accountInfo.PrimaryId, pwdEncryptorSalt)
 	pwd, err := accountInfo.Password.GetPwd()
 	if err == nil {
 		fmt.Println("Password:" + pwd)
 	}
-	service := new(account.AccountService)
-	service.Register(c.Ctx, accountInfo)
-	c.TplName = "register/index.tpl"
+
+	regErr := accountService.Register(c.Ctx, accountInfo)
+	if regErr != nil {
+		fmt.Println(regErr.Error())
+		c.Ctx.Redirect(302, "/register")
+		return
+	}
+	c.Ctx.Redirect(302, "/login")
 }

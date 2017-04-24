@@ -2,10 +2,21 @@ package account
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
 )
 
 type IdDescriptor struct {
 	Name, Format, Description string
+}
+
+func (desc *IdDescriptor) Validate(id string) bool {
+	matched, err := regexp.MatchString(desc.Format, id)
+	if err != nil {
+		// log
+		return false
+	}
+	return matched
 }
 
 func NewIdDescriptor(name, format, description string) (*IdDescriptor, error) {
@@ -28,6 +39,13 @@ func (registry *idDescriptorRegistry) Register(descriptor IdDescriptor) error {
 }
 
 func (registry *idDescriptorRegistry) Match(id string) (*IdDescriptor, error) {
+	for _, v := range registry.idd_map {
+		matched, err := regexp.MatchString(v.Format, id)
+		if err == nil && matched {
+			return &v, nil
+		}
+	}
+	fmt.Println("no match descriptor found")
 	return nil, errors.New("no match descriptor found")
 }
 
@@ -40,5 +58,4 @@ var GlobalIdDescriptorRegistry *idDescriptorRegistry
 
 func initIdRegistry() {
 	GlobalIdDescriptorRegistry = newIdDescriptorRegistry()
-
 }

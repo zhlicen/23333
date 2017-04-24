@@ -19,27 +19,27 @@
         <div class="form-group login-wrap">
             <label for="Username" class="col-sm-2 control-label">用户名</label>
             <div class="col-sm-10">
-                <input type="text" class="form-control" pattern="^[_A-z0-9]{1,}$" id="Username" placeholder="Username" data-error="用户名不能包含特殊字符" required>
+                <input type="text" name="username" class="form-control" pattern="^[_A-z0-9]{1,}$" id="Username" placeholder="Username" data-error="用户名不能包含特殊字符" required>
 				<div class="help-block with-errors"></div>
             </div>
         </div>
         <div class="form-group login-wrap has-feedback">
             <label for="inputEmail" class="col-sm-2 control-label">邮箱</label>
             <div class="col-sm-10">
-                <input type="email" class="form-control" id="inputEmail" placeholder="Email" data-error="输入有效的邮箱'example@test.com'" required>
+                <input type="email" class="form-control" id="inputEmail" name="email" placeholder="Email" data-error="输入有效的邮箱'example@test.com'" required>
 				<div class="help-block with-errors"></div>
             </div>
         </div>
         <div class="form-group login-wrap">
             <label for="inputTEL" class="col-sm-2 control-label">手机号</label>
             <div class="col-sm-10">
-                <input type="tel" pattern="^[0-9]{1,}$" class="form-control" id="inputTEL" placeholder="Phone" required>
+                <input type="tel" name="mobile" pattern="^[0-9]{1,}$" class="form-control" id="inputTEL" placeholder="Phone" required>
             </div>
         </div>
         <div class="form-group login-wrap">
             <label for="inputPassword1" class="col-sm-2 control-label">密码</label>
             <div class="col-sm-10">
-                <input type="password" data-minlength="6" class="form-control" id="inputPassword1" placeholder="Password" data-error="最少6位密码" required>
+                <input type="password" name="password" data-minlength="6" class="form-control" id="inputPassword1" placeholder="Password" data-error="最少6位密码" required>
 				<div class="help-block with-errors"></div>
             </div>
         </div>

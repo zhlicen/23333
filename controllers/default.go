@@ -13,5 +13,6 @@ func (c *MainController) Get() {
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
+	c.Data["LoginUser"] = c.GetSession("LoginUser")
 	c.TplName = "index.tpl"
 }

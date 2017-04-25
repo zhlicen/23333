@@ -25,7 +25,7 @@ func (encryptor *SaultEncryptor) Encrypt(content string, param interface{}) (str
 	io.WriteString(h, content)
 	pwMd5 := fmt.Sprintf("%x", h.Sum(nil))
 
-	//salt1+用户名+salt2+MD5拼接
+	//salt1+参数+salt2+MD5拼接
 	io.WriteString(h, encryptor.salt1)
 	io.WriteString(h, param.(string))
 	io.WriteString(h, encryptor.salt2)

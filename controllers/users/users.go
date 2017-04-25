@@ -12,6 +12,6 @@ var pwdEncryptorSalt utilities.Encryptor
 
 func init() {
 	accountModel = new(UserModel)
-	accountService = account.NewAccountService(accountModel)
+	accountService = account.NewAccountService("app", accountModel)
 	pwdEncryptorSalt = utilities.NewSaultEncryptor("@!#!@", "12ws")
 }

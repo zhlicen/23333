@@ -7,20 +7,11 @@ import (
 )
 
 type IdDescriptor struct {
-	Name, Format, Description string
+	KeyDescriptor
 }
 
-func (desc *IdDescriptor) Validate(id string) bool {
-	matched, err := regexp.MatchString(desc.Format, id)
-	if err != nil {
-		// log
-		return false
-	}
-	return matched
-}
-
-func NewIdDescriptor(name, format, description string) (*IdDescriptor, error) {
-	descriptor := &IdDescriptor{name, format, description}
+func NewIdDescriptor(name, format string, caseSensortive bool, description string) (*IdDescriptor, error) {
+	descriptor := &IdDescriptor{KeyDescriptor{name, format, description, caseSensortive}}
 	err := GlobalIdDescriptorRegistry.Register(*descriptor)
 	return descriptor, err
 }
@@ -58,4 +49,20 @@ var GlobalIdDescriptorRegistry *idDescriptorRegistry
 
 func initIdRegistry() {
 	GlobalIdDescriptorRegistry = newIdDescriptorRegistry()
+}
+
+func ValidateId(name string, value string) (bool, error) {
+	descriptor, getErr := GlobalIdDescriptorRegistry.Get(name)
+	if getErr != nil {
+		return false, getErr
+	}
+	return descriptor.Validate(value), nil
+}
+
+func GetIdDescriptor(name string) (*IdDescriptor, error) {
+	return GlobalIdDescriptorRegistry.Get(name)
+}
+
+func MatchIdDescriptor(id string) (*IdDescriptor, error) {
+	return GlobalIdDescriptorRegistry.Match(id)
 }

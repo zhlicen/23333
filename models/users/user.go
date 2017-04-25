@@ -2,11 +2,9 @@ package users
 
 import (
 	"23333/account"
-	"time"
-
-	"fmt"
-
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
@@ -42,10 +40,10 @@ type UserModel struct {
 func (u *UserModel) Add(accountInfo *account.AccountInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
-	user.Uid = accountInfo.PrimaryId
-	user.Username = accountInfo.Ids[account.UserName.Name]
-	user.Email = accountInfo.Ids[account.Email.Name]
-	user.Mobile = accountInfo.Ids[account.Mobile.Name]
+	user.Uid = accountInfo.Uid
+	user.Username = accountInfo.Ids[account.UserName.Name].Id
+	user.Email = accountInfo.Ids[account.Email.Name].Id
+	user.Mobile = accountInfo.Ids[account.Mobile.Name].Id
 	user.Regtime = time.Now().Format("2006-01-02 15:04:05")
 	user.Password, _ = accountInfo.Password.GetPwd()
 	_, err := o.Insert(user)
@@ -57,7 +55,7 @@ func (u *UserModel) FindByPid(id string) (*account.AccountInfo, error) {
 }
 
 func (u *UserModel) FindById(id string) (*account.AccountInfo, error) {
-	desc, matchErr := account.GlobalIdDescriptorRegistry.Match(id)
+	desc, matchErr := account.MatchIdDescriptor(id)
 	if matchErr != nil {
 		return nil, matchErr
 	}
@@ -84,10 +82,10 @@ func (u *UserModel) FindById(id string) (*account.AccountInfo, error) {
 		return nil, readErr
 	}
 	accountInfo := account.NewAccountInfo()
-	accountInfo.PrimaryId = user.Uid
-	accountInfo.Ids[account.UserName.Name] = user.Username
-	accountInfo.Ids[account.Email.Name] = user.Email
-	accountInfo.Ids[account.Mobile.Name] = user.Mobile
-	accountInfo.Password.SetRawPwd(user.Password)
+	accountInfo.Uid = user.Uid
+	accountInfo.Ids[account.UserName.Name] = account.NewAccountId(user.Username)
+	accountInfo.Ids[account.Email.Name] = account.NewAccountId(user.Email)
+	accountInfo.Ids[account.Mobile.Name] = account.NewAccountId(user.Mobile)
+	accountInfo.Password.SetEncryptedPwd(user.Password)
 	return accountInfo, nil
 }

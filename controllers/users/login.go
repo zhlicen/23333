@@ -30,20 +30,14 @@ func (c *LoginController) Post() {
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	pwd := new(account.AccountPwd)
-	pwd.SetPwd(password, accountInfo.PrimaryId, pwdEncryptorSalt)
-	accountPwd, pwdErr := accountInfo.Password.GetPwd()
-	if pwdErr != nil {
-		fmt.Println("invalid password")
+	userPwd := new(account.AccountPwd)
+	userPwd.SetPwd("Password", password, accountInfo.Uid, pwdEncryptorSalt)
+	loginErr := accountService.Login(c.Ctx, username, userPwd)
+
+	if loginErr != nil {
+		fmt.Println(loginErr.Error())
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	userPwd, _ := pwd.GetPwd()
-	if userPwd != accountPwd {
-		fmt.Println("invalid password")
-		c.Ctx.Redirect(302, "/login")
-		return
-	}
-	c.SetSession("LoginUser", username)
 	c.Ctx.Redirect(302, "/")
 }

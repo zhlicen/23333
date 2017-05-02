@@ -23,7 +23,7 @@ type AccountPwd struct {
 	pwd string
 }
 
-func (accountPwd *AccountPwd) SetPwd(descriptor string,
+func (accountPwd *AccountPwd) SetPwd(descriptor KeyName,
 	pwd string, param interface{}, encryptor utilities.Encryptor) error {
 	var err error
 	desc, _ := GetKeyDescriptor(descriptor)
@@ -56,11 +56,12 @@ type AccountInfo struct {
 	Group    string
 	Uid      string
 	Password AccountPwd
-	Ids      map[string]AccountId
-	OAuth2Id map[string]string
-	Profiles map[string]string
-	Others   map[string]string
+	Ids      map[IdName]AccountId
+	OAuth2Id map[KeyName]string
+	Profiles map[KeyName]string
+	Others   map[KeyName]string
 	Status   AccountStatus
+	Sessions []string
 }
 
 func NewAccountInfo() *AccountInfo {
@@ -71,10 +72,10 @@ func NewAccountInfo() *AccountInfo {
 	if keyErr != nil {
 		return nil
 	}
-	accountInfo.Ids = make(map[string]AccountId)
-	accountInfo.OAuth2Id = make(map[string]string)
-	accountInfo.Profiles = make(map[string]string)
-	accountInfo.Others = make(map[string]string)
+	accountInfo.Ids = make(map[IdName]AccountId)
+	accountInfo.OAuth2Id = make(map[KeyName]string)
+	accountInfo.Profiles = make(map[KeyName]string)
+	accountInfo.Others = make(map[KeyName]string)
 	return accountInfo
 }
 
@@ -87,9 +88,9 @@ func (accountInfo *AccountInfo) Validate() error {
 			v.Id = strings.ToLower(v.Id)
 			accountInfo.Ids[k] = v
 		}
-		fmt.Println("Checking " + k)
+		fmt.Println("Checking " + string(k))
 		if err == nil && !descriptor.Validate(v.Id) {
-			return errors.New(k + " do not match format, " + descriptor.Description)
+			return errors.New(string(k) + " do not match format, " + descriptor.Description)
 		}
 		fmt.Println("---OK")
 		validIdCount++
@@ -104,9 +105,9 @@ func (accountInfo *AccountInfo) Validate() error {
 			v = strings.ToLower(v)
 			accountInfo.Profiles[k] = v
 		}
-		fmt.Println("Checking " + k)
+		fmt.Println("Checking " + string(k))
 		if err == nil && !descriptor.Validate(v) {
-			return errors.New(k + " do not match format, " + descriptor.Description)
+			return errors.New(string(k) + " do not match format, " + descriptor.Description)
 
 		}
 		fmt.Println("---OK")
@@ -118,9 +119,9 @@ func (accountInfo *AccountInfo) Validate() error {
 			v = strings.ToLower(v)
 			accountInfo.Others[k] = v
 		}
-		fmt.Println("Checking " + k)
+		fmt.Println("Checking " + string(k))
 		if err == nil && !descriptor.Validate(v) {
-			return errors.New(k + " do not match format, " + descriptor.Description)
+			return errors.New(string(k) + " do not match format, " + descriptor.Description)
 
 		}
 		fmt.Println("---OK")
@@ -132,9 +133,9 @@ func (accountInfo *AccountInfo) Validate() error {
 			v = strings.ToLower(v)
 			accountInfo.OAuth2Id[k] = v
 		}
-		fmt.Println("Checking " + k)
+		fmt.Println("Checking " + string(k))
 		if err == nil && !descriptor.Validate(v) {
-			return errors.New(k + " do not match format, " + descriptor.Description)
+			return errors.New(string(k) + " do not match format, " + descriptor.Description)
 		}
 		fmt.Println("---OK")
 	}

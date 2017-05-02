@@ -50,7 +50,7 @@ func (u *UserModel) Add(accountInfo *account.AccountInfo) error {
 	return err
 }
 
-func (u *UserModel) FindByPid(id string) (*account.AccountInfo, error) {
+func (u *UserModel) FindByUid(id string) (*account.AccountInfo, error) {
 	return nil, nil
 }
 

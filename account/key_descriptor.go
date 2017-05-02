@@ -1,12 +1,16 @@
 package account
 
 import (
+	"errors"
 	"regexp"
 )
 
+type KeyName string
+
 type KeyDescriptor struct {
-	Name, Format, Description string
-	CaseSensitive             bool
+	Name                KeyName
+	Format, Description string
+	CaseSensitive       bool
 }
 
 func (desc *KeyDescriptor) Validate(id string) bool {
@@ -18,37 +22,39 @@ func (desc *KeyDescriptor) Validate(id string) bool {
 	return matched
 }
 
-func NewKeyDescriptor(name, format string, caseSensortive bool, description string) (*KeyDescriptor, error) {
+func NewKeyDescriptor(name KeyName, format string, caseSensortive bool, description string) (*KeyDescriptor, error) {
 	descriptor := &KeyDescriptor{name, format, description, caseSensortive}
 	err := GlobalKeyDescriptorRegistry.Register(*descriptor)
 	return descriptor, err
 }
 
 type keyDescriptorRegistry struct {
-	idd_map map[string]KeyDescriptor
+	idd_map map[KeyName]KeyDescriptor
 }
 
 func NewKeyDescriptorRegistry() *keyDescriptorRegistry {
-	return &keyDescriptorRegistry{make(map[string]KeyDescriptor)}
+	return &keyDescriptorRegistry{make(map[KeyName]KeyDescriptor)}
 }
 
-func (registry *keyDescriptorRegistry) Register(descriptor KeyDescriptor) error {
-	registry.idd_map[descriptor.Name] = descriptor
+func (r *keyDescriptorRegistry) Register(descriptor KeyDescriptor) error {
+	r.idd_map[descriptor.Name] = descriptor
 	return nil
 }
 
-func (registry *keyDescriptorRegistry) Get(name string) (*KeyDescriptor, error) {
-	descriptor := registry.idd_map[name]
-	return &descriptor, nil
+func (r *keyDescriptorRegistry) Get(name KeyName) (*KeyDescriptor, error) {
+	if descriptor, ok := r.idd_map[name]; ok {
+		return &descriptor, nil
+	}
+	return nil, errors.New("not found")
 }
 
 var GlobalKeyDescriptorRegistry *keyDescriptorRegistry
 
-func GetKeyDescriptor(name string) (*KeyDescriptor, error) {
+func GetKeyDescriptor(name KeyName) (*KeyDescriptor, error) {
 	return GlobalKeyDescriptorRegistry.Get(name)
 }
 
-func ValidateKey(name string, value string) (bool, error) {
+func ValidateKey(name KeyName, value string) (bool, error) {
 	descriptor, getErr := GlobalKeyDescriptorRegistry.Get(name)
 	if getErr != nil {
 		return false, getErr

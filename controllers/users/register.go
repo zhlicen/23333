@@ -41,6 +41,8 @@ func (c *RegisterController) Post() {
 	pwd, err := accountInfo.Password.GetPwd()
 	if err == nil {
 		fmt.Println("Password:" + pwd)
+	} else {
+		fmt.Println(err)
 	}
 
 	regErr := accountService.Register(c.Ctx, accountInfo)
@@ -49,7 +51,7 @@ func (c *RegisterController) Post() {
 		c.Ctx.Redirect(302, "/register")
 		return
 	}
-	go SendMail(email)
+	// go SendMail(email)
 	c.Ctx.Redirect(302, "/login")
 }
 

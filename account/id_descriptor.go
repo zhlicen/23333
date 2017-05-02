@@ -6,26 +6,39 @@ import (
 	"regexp"
 )
 
+type IdName string
+
 type IdDescriptor struct {
-	KeyDescriptor
+	Name                IdName
+	Format, Description string
+	CaseSensitive       bool
 }
 
-func NewIdDescriptor(name, format string, caseSensortive bool, description string) (*IdDescriptor, error) {
-	descriptor := &IdDescriptor{KeyDescriptor{name, format, description, caseSensortive}}
+func (desc *IdDescriptor) Validate(id string) bool {
+	matched, err := regexp.MatchString(desc.Format, id)
+	if err != nil {
+		// log
+		return false
+	}
+	return matched
+}
+
+func NewIdDescriptor(name IdName, format string, caseSensortive bool, description string) (*IdDescriptor, error) {
+	descriptor := &IdDescriptor{name, format, description, caseSensortive}
 	err := GlobalIdDescriptorRegistry.Register(*descriptor)
 	return descriptor, err
 }
 
 type idDescriptorRegistry struct {
-	idd_map map[string]IdDescriptor
+	idd_map map[IdName]IdDescriptor
 }
 
 func newIdDescriptorRegistry() *idDescriptorRegistry {
-	return &idDescriptorRegistry{make(map[string]IdDescriptor)}
+	return &idDescriptorRegistry{make(map[IdName]IdDescriptor)}
 }
 
 func (registry *idDescriptorRegistry) Register(descriptor IdDescriptor) error {
-	registry.idd_map[descriptor.Name] = descriptor
+	registry.idd_map[IdName(descriptor.Name)] = descriptor
 	return nil
 }
 
@@ -40,7 +53,7 @@ func (registry *idDescriptorRegistry) Match(id string) (*IdDescriptor, error) {
 	return nil, errors.New("no match descriptor found")
 }
 
-func (registry *idDescriptorRegistry) Get(name string) (*IdDescriptor, error) {
+func (registry *idDescriptorRegistry) Get(name IdName) (*IdDescriptor, error) {
 	descriptor := registry.idd_map[name]
 	return &descriptor, nil
 }
@@ -51,7 +64,7 @@ func initIdRegistry() {
 	GlobalIdDescriptorRegistry = newIdDescriptorRegistry()
 }
 
-func ValidateId(name string, value string) (bool, error) {
+func ValidateId(name IdName, value string) (bool, error) {
 	descriptor, getErr := GlobalIdDescriptorRegistry.Get(name)
 	if getErr != nil {
 		return false, getErr
@@ -59,7 +72,7 @@ func ValidateId(name string, value string) (bool, error) {
 	return descriptor.Validate(value), nil
 }
 
-func GetIdDescriptor(name string) (*IdDescriptor, error) {
+func GetIdDescriptor(name IdName) (*IdDescriptor, error) {
 	return GlobalIdDescriptorRegistry.Get(name)
 }
 

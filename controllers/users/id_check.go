@@ -13,11 +13,11 @@ type IdCheckController struct {
 func (c *IdCheckController) Get() {
 	id := c.GetString("id")
 	fmt.Println("id:" + id)
-	_, getErr := accountService.GetUidById(c.Ctx, id)
+	_, getErr := accountMgr.GetUidById(c.Ctx, id)
 	if getErr != nil {
-		c.Data["json"] = map[string]interface{}{"code": 0, "message": "not exist"}
+		c.Data["json"] = map[string]interface{}{"code": 1, "message": getErr.Error()}
 	} else {
-		c.Data["json"] = map[string]interface{}{"code": 1, "message": "exist"}
+		c.Data["json"] = map[string]interface{}{"code": 0, "message": "exist"}
 	}
 	c.ServeJSON()
 }

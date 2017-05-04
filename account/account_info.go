@@ -50,28 +50,54 @@ type AccountStatus struct {
 	Locked     bool
 	LockExpire string
 }
+type AccountUid string
 
-type AccountInfo struct {
+func NewAccountUid(uid string) AccountUid {
+	return AccountUid(uid)
+}
+
+func (a AccountUid) String() string {
+	return string(a)
+}
+
+func (a *AccountUid) SetVal(val string) {
+	*a = AccountUid(val)
+}
+
+type AccountBaseInfo struct {
 	Domain   string
 	Group    string
-	Uid      string
-	Password AccountPwd
+	Uid      AccountUid
 	Ids      map[IdName]AccountId
+	Password AccountPwd
+}
+
+func NewAccountBaseInfo() *AccountBaseInfo {
+	accountBaseInfo := new(AccountBaseInfo)
+	accountBaseInfo.Ids = make(map[IdName]AccountId)
+	return accountBaseInfo
+}
+
+func (a *AccountBaseInfo) GenRandomUid() (string, error) {
+	keyGen := utilities.NewRandomKeyGenerator(16, []byte(`1234567890abcdefghijklmnopqrstuvwxyz`)...)
+	uid, keyErr := keyGen.Generate()
+	if keyErr != nil {
+		return "", keyErr
+	}
+	a.Uid.SetVal(uid)
+	return uid, nil
+}
+
+type AccountInfo struct {
+	AccountBaseInfo
 	OAuth2Id map[KeyName]string
 	Profiles map[KeyName]string
 	Others   map[KeyName]string
 	Status   AccountStatus
-	Sessions []string
 }
 
 func NewAccountInfo() *AccountInfo {
 	accountInfo := new(AccountInfo)
-	keyGen := utilities.NewRandomKeyGenerator(16, []byte(`1234567890abcdefghijklmnopqrstuvwxyz`)...)
-	var keyErr error
-	accountInfo.Uid, keyErr = keyGen.Generate()
-	if keyErr != nil {
-		return nil
-	}
 	accountInfo.Ids = make(map[IdName]AccountId)
 	accountInfo.OAuth2Id = make(map[KeyName]string)
 	accountInfo.Profiles = make(map[KeyName]string)

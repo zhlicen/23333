@@ -7,23 +7,23 @@ import (
 )
 
 type KeyGenerator interface {
-	Generate() (string, error)
+	Generate(param ...interface{}) (string, error)
 }
 
-type RandomKeyGenerator struct {
+type randomKeyGenerator struct {
 	len       int
 	alphabets []byte
 }
 
-func NewRandomKeyGenerator(len int, alphabets ...byte) *RandomKeyGenerator {
+func NewRandomKeyGenerator(len int, alphabets ...byte) *randomKeyGenerator {
 	if alphabets == nil {
-		return &RandomKeyGenerator{len,
+		return &randomKeyGenerator{len,
 			[]byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")}
 	}
-	return &RandomKeyGenerator{len, alphabets}
+	return &randomKeyGenerator{len, alphabets}
 }
 
-func (g *RandomKeyGenerator) Generate(param ...interface{}) (string, error) {
+func (g *randomKeyGenerator) Generate(param ...interface{}) (string, error) {
 	n := g.len
 	var bytes = make([]byte, n)
 	var randBy bool

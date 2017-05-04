@@ -3,9 +3,14 @@ package account
 import (
 	"errors"
 	"regexp"
+	"strings"
 )
 
 type KeyName string
+
+func (k KeyName) String() string {
+	return string(k)
+}
 
 type KeyDescriptor struct {
 	Name                KeyName
@@ -13,8 +18,11 @@ type KeyDescriptor struct {
 	CaseSensitive       bool
 }
 
-func (desc *KeyDescriptor) Validate(id string) bool {
-	matched, err := regexp.MatchString(desc.Format, id)
+func (desc *KeyDescriptor) Validate(key string) bool {
+	if !desc.CaseSensitive {
+		key = strings.ToLower(key)
+	}
+	matched, err := regexp.MatchString(desc.Format, key)
 	if err != nil {
 		// log
 		return false

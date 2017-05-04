@@ -2,11 +2,15 @@ package account
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
+	"strings"
 )
 
 type IdName string
+
+func (i IdName) String() string {
+	return string(i)
+}
 
 type IdDescriptor struct {
 	Name                IdName
@@ -15,6 +19,9 @@ type IdDescriptor struct {
 }
 
 func (desc *IdDescriptor) Validate(id string) bool {
+	if !desc.CaseSensitive {
+		id = strings.ToLower(id)
+	}
 	matched, err := regexp.MatchString(desc.Format, id)
 	if err != nil {
 		// log
@@ -44,12 +51,11 @@ func (registry *idDescriptorRegistry) Register(descriptor IdDescriptor) error {
 
 func (registry *idDescriptorRegistry) Match(id string) (*IdDescriptor, error) {
 	for _, v := range registry.idd_map {
-		matched, err := regexp.MatchString(v.Format, id)
-		if err == nil && matched {
+		matched := v.Validate(id)
+		if matched {
 			return &v, nil
 		}
 	}
-	fmt.Println("no match descriptor found")
 	return nil, errors.New("no match descriptor found")
 }
 

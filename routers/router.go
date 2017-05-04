@@ -12,4 +12,6 @@ func init() {
 	beego.Router("/register", &users.RegisterController{})
 	beego.Router("/login", &users.LoginController{})
 	beego.Router("/idCheck", &users.IdCheckController{})
+	beego.Router("/sendVerify", &users.SendVerifyController{})
+	beego.Router("/accountVerify", &users.AccountVerifyController{})
 }

@@ -17,7 +17,7 @@ func (c *AccountVerifyController) Get() {
 	var code int
 	var message string = "account verified!"
 	verifier := verify.NewVerifier(accountVS, key, token)
-	err := accountMgr.VerifyId(c.Ctx, verifier, id)
+	err := AccountMgr.VerifyId(c.Ctx, verifier, id)
 	if err != nil {
 		code = 1
 		message = err.Error()

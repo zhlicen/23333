@@ -1,22 +1,22 @@
 package users
 
 import (
-	"23333/utils/web/beenhance/beaccount"
 	. "23333/models/users"
 	"23333/utils/encrypt"
 	"23333/utils/idgen"
+	"23333/utils/web/beenh/beeaccount"
 	"23333/utils/web/verify"
 	"net/mail"
 )
 
-var accountModel beaccount.AccountModel
-var accountMgr *beaccount.AccountMgr
+var accountModel beeaccount.AccountModel
+var AccountMgr *beeaccount.AccountMgr
 var pwdEncryptorSalt encrypt.Encryptor
 var accountVS *verify.SMTPVerifyService
 
 func init() {
 	accountModel = new(UserModel)
-	accountMgr = beaccount.NewAccountMgr("app", accountModel)
+	AccountMgr = beeaccount.NewAccountMgr("app", accountModel, nil)
 	pwdEncryptorSalt = encrypt.NewSaultEncryptor("@!#!@", "12ws")
 	// intialize verify service
 	idGen := idgen.NewRandomIdGenerator(32)

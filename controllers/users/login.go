@@ -1,7 +1,7 @@
 package users
 
 import (
-	"23333/utils/web/beenhance/beaccount"
+	"23333/utils/web/beenh/beeaccount"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -12,7 +12,7 @@ type LoginController struct {
 }
 
 func (c *LoginController) Get() {
-	if c.GetSession("LoginUser") != nil {
+	if AccountMgr.GetLoginUserId(c.Ctx) != nil {
 		c.Ctx.Redirect(302, "/")
 		return
 	}
@@ -24,15 +24,15 @@ func (c *LoginController) Post() {
 	password := c.GetString("password")
 	fmt.Println("username:" + username)
 	fmt.Println("password:" + password)
-	userId, getErr := accountMgr.GetUserId(c.Ctx, username)
+	userId, getErr := AccountMgr.GetUserId(c.Ctx, username)
 	if getErr != nil {
 		fmt.Println(getErr.Error())
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	userPwd := new(beaccount.LoginPwd)
+	userPwd := new(beeaccount.LoginPwd)
 	userPwd.SetPwd("Password", password, userId.Uid, pwdEncryptorSalt)
-	loginErr := accountMgr.Login(c.Ctx, username, userPwd)
+	loginErr := AccountMgr.Login(c.Ctx, username, userPwd)
 
 	if loginErr != nil {
 		fmt.Println(loginErr.Error())

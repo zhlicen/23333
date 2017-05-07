@@ -12,7 +12,7 @@ type LogoutController struct {
 
 func (c *LogoutController) Post() {
 	c.StartSession()
-	err := accountMgr.LogoutSession(c.Ctx, c.CruSession.SessionID())
+	err := AccountMgr.CurrentAccount(c.Ctx).LogoutSession(c.CruSession.SessionID())
 	if err != nil {
 		fmt.Println(err.Error())
 		c.Ctx.Redirect(302, "/")

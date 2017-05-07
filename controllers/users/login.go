@@ -1,7 +1,7 @@
 package users
 
 import (
-	"23333/account"
+	"23333/utils/web/beenhance/beaccount"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -30,7 +30,7 @@ func (c *LoginController) Post() {
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	userPwd := new(account.AccountPwd)
+	userPwd := new(beaccount.AccountPwd)
 	userPwd.SetPwd("Password", password, Uid.String(), pwdEncryptorSalt)
 	loginErr := accountMgr.Login(c.Ctx, username, userPwd)
 

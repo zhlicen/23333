@@ -1,7 +1,7 @@
 package users
 
 import (
-	"23333/account"
+	"23333/utils/web/beenhance/beaccount"
 	"errors"
 	"fmt"
 	"time"
@@ -38,14 +38,14 @@ func init() {
 type UserModel struct {
 }
 
-func (u *UserModel) Add(accountInfo *account.AccountInfo) error {
+func (u *UserModel) Add(accountInfo *beaccount.AccountInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
 	user.Uid = accountInfo.Uid.String()
-	user.Username = accountInfo.Ids[account.UserName.Name].Id
-	user.Email = accountInfo.Ids[account.Email.Name].Id
-	user.EmailVerified = accountInfo.Ids[account.Email.Name].Verified
-	user.Mobile = accountInfo.Ids[account.Mobile.Name].Id
+	user.Username = accountInfo.Ids[beaccount.UserName.Name].Id
+	user.Email = accountInfo.Ids[beaccount.Email.Name].Id
+	user.EmailVerified = accountInfo.Ids[beaccount.Email.Name].Verified
+	user.Mobile = accountInfo.Ids[beaccount.Mobile.Name].Id
 	user.Regtime = time.Now().Format("2006-01-02 15:04:05")
 	user.Password, _ = accountInfo.Password.GetPwd()
 
@@ -53,21 +53,21 @@ func (u *UserModel) Add(accountInfo *account.AccountInfo) error {
 	return err
 }
 
-func (u *UserModel) Delete(uid account.AccountUid) error {
+func (u *UserModel) Delete(uid beaccount.AccountUid) error {
 	return errors.New("not supported")
 }
 
-func (u *UserModel) GetUidById(idName account.IdName, id string) (account.AccountUid, error) {
+func (u *UserModel) GetUidById(idName beaccount.IdName, id string) (beaccount.AccountUid, error) {
 	user := User{}
 	var column string
 	switch idName {
-	case account.UserName.Name:
+	case beaccount.UserName.Name:
 		column = "UserName"
 		user.Username = id
-	case account.Email.Name:
+	case beaccount.Email.Name:
 		column = "Email"
 		user.Email = id
-	case account.Mobile.Name:
+	case beaccount.Mobile.Name:
 		column = "Mobile"
 		user.Mobile = id
 	default:
@@ -79,10 +79,10 @@ func (u *UserModel) GetUidById(idName account.IdName, id string) (account.Accoun
 	if readErr != nil {
 		return "", readErr
 	}
-	return account.AccountUid(user.Uid), nil
+	return beaccount.AccountUid(user.Uid), nil
 }
 
-func (u *UserModel) GetAccountInfo(uid account.AccountUid) (*account.AccountInfo, error) {
+func (u *UserModel) GetAccountInfo(uid beaccount.AccountUid) (*beaccount.AccountInfo, error) {
 	user := User{}
 	user.Uid = uid.String()
 
@@ -92,16 +92,16 @@ func (u *UserModel) GetAccountInfo(uid account.AccountUid) (*account.AccountInfo
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountInfo := account.NewAccountInfo()
+	accountInfo := beaccount.NewAccountInfo()
 	accountInfo.Uid.SetVal(user.Uid)
-	accountInfo.Ids[account.UserName.Name] = account.NewAccountId(user.Username)
-	accountInfo.Ids[account.Email.Name] = account.NewAccountId(user.Email, user.EmailVerified)
-	accountInfo.Ids[account.Mobile.Name] = account.NewAccountId(user.Mobile)
+	accountInfo.Ids[beaccount.UserName.Name] = beaccount.NewAccountId(user.Username)
+	accountInfo.Ids[beaccount.Email.Name] = beaccount.NewAccountId(user.Email, user.EmailVerified)
+	accountInfo.Ids[beaccount.Mobile.Name] = beaccount.NewAccountId(user.Mobile)
 	accountInfo.Password.SetEncryptedPwd(user.Password)
 	return accountInfo, nil
 }
 
-func (u *UserModel) GetAccountBaseInfo(uid account.AccountUid) (*account.AccountBaseInfo, error) {
+func (u *UserModel) GetAccountBaseInfo(uid beaccount.AccountUid) (*beaccount.AccountBaseInfo, error) {
 	user := User{}
 	user.Uid = uid.String()
 
@@ -111,58 +111,58 @@ func (u *UserModel) GetAccountBaseInfo(uid account.AccountUid) (*account.Account
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountBaseInfo := account.NewAccountBaseInfo()
+	accountBaseInfo := beaccount.NewAccountBaseInfo()
 	accountBaseInfo.Uid.SetVal(user.Uid)
-	accountBaseInfo.Ids[account.UserName.Name] = account.NewAccountId(user.Username)
-	accountBaseInfo.Ids[account.Email.Name] = account.NewAccountId(user.Email)
-	accountBaseInfo.Ids[account.Email.Name] = account.NewAccountId(user.Email, user.EmailVerified)
-	accountBaseInfo.Ids[account.Mobile.Name] = account.NewAccountId(user.Mobile)
+	accountBaseInfo.Ids[beaccount.UserName.Name] = beaccount.NewAccountId(user.Username)
+	accountBaseInfo.Ids[beaccount.Email.Name] = beaccount.NewAccountId(user.Email)
+	accountBaseInfo.Ids[beaccount.Email.Name] = beaccount.NewAccountId(user.Email, user.EmailVerified)
+	accountBaseInfo.Ids[beaccount.Mobile.Name] = beaccount.NewAccountId(user.Mobile)
 	accountBaseInfo.Password.SetEncryptedPwd(user.Password)
 	return accountBaseInfo, nil
 }
 
-func (u *UserModel) GetOAuth2Id(uid account.AccountUid) (map[account.KeyName]string, error) {
+func (u *UserModel) GetOAuth2Id(uid beaccount.AccountUid) (map[beaccount.KeyName]string, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) GetProfiles(uid account.AccountUid) (map[account.KeyName]string, error) {
+func (u *UserModel) GetProfiles(uid beaccount.AccountUid) (map[beaccount.KeyName]string, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) GetOthers(uid account.AccountUid) (map[account.KeyName]string, error) {
+func (u *UserModel) GetOthers(uid beaccount.AccountUid) (map[beaccount.KeyName]string, error) {
 	return nil, errors.New("not implemented")
 }
-func (u *UserModel) GetAccountStatus(uid account.AccountUid) (*account.AccountStatus, error) {
+func (u *UserModel) GetAccountStatus(uid beaccount.AccountUid) (*beaccount.AccountStatus, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateAccountBaseInfo(uid account.AccountUid, baseInfo *account.AccountBaseInfo) error {
+func (u *UserModel) UpdateAccountBaseInfo(uid beaccount.AccountUid, baseInfo *beaccount.AccountBaseInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
 	user.Uid = baseInfo.Uid.String()
 	o.Read(user)
-	user.Username = baseInfo.Ids[account.UserName.Name].Id
-	user.Email = baseInfo.Ids[account.Email.Name].Id
-	user.EmailVerified = baseInfo.Ids[account.Email.Name].Verified
-	user.Mobile = baseInfo.Ids[account.Mobile.Name].Id
+	user.Username = baseInfo.Ids[beaccount.UserName.Name].Id
+	user.Email = baseInfo.Ids[beaccount.Email.Name].Id
+	user.EmailVerified = baseInfo.Ids[beaccount.Email.Name].Verified
+	user.Mobile = baseInfo.Ids[beaccount.Mobile.Name].Id
 	user.Password, _ = baseInfo.Password.GetPwd()
 	fmt.Println(user)
 	_, err := o.Update(user)
 	return err
 }
 
-func (u *UserModel) UpdateOAuth2Id(uid account.AccountUid, ids map[account.KeyName]string) error {
+func (u *UserModel) UpdateOAuth2Id(uid beaccount.AccountUid, ids map[beaccount.KeyName]string) error {
 	return errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateProfiles(uid account.AccountUid, profiles map[account.KeyName]string) error {
+func (u *UserModel) UpdateProfiles(uid beaccount.AccountUid, profiles map[beaccount.KeyName]string) error {
 	return errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateOthers(uid account.AccountUid, others map[account.KeyName]string) error {
+func (u *UserModel) UpdateOthers(uid beaccount.AccountUid, others map[beaccount.KeyName]string) error {
 	return errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateAccountStatus(uid account.AccountUid, status *account.AccountStatus) error {
+func (u *UserModel) UpdateAccountStatus(uid beaccount.AccountUid, status *beaccount.AccountStatus) error {
 	return errors.New("not implemented")
 }

@@ -1,7 +1,7 @@
 package users
 
 import (
-	"23333/account"
+	"23333/utils/web/beenhance/beaccount"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -21,18 +21,18 @@ func (c *RegisterController) Get() {
 }
 
 func (c *RegisterController) Post() {
-	accountInfo := account.NewAccountInfo()
+	accountInfo := beaccount.NewAccountInfo()
 	accountInfo.GenRandomUid()
 	username := c.GetString("username")
 	password := c.GetString("password")
 	mobile := c.GetString("mobile")
 	email := c.GetString("email")
 	accountInfo.Domain = beego.BConfig.AppName
-	accountInfo.Ids[account.UserName.Name] = account.NewAccountId(username)
+	accountInfo.Ids[beaccount.UserName.Name] = beaccount.NewAccountId(username)
 	fmt.Println("UserName:" + username)
-	accountInfo.Ids[account.Mobile.Name] = account.NewAccountId(mobile)
+	accountInfo.Ids[beaccount.Mobile.Name] = beaccount.NewAccountId(mobile)
 	fmt.Println("Mobile:" + mobile)
-	accountInfo.Ids[account.Email.Name] = account.NewAccountId(email, false)
+	accountInfo.Ids[beaccount.Email.Name] = beaccount.NewAccountId(email, false)
 	fmt.Println("Email:" + email)
 
 	accountInfo.Password.SetPwd("Password", password, accountInfo.Uid.String(), pwdEncryptorSalt)

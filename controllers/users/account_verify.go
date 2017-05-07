@@ -1,7 +1,7 @@
 package users
 
 import (
-	"23333/utilities/verify"
+	"23333/utils/web/verify"
 
 	"github.com/astaxie/beego"
 )

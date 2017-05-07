@@ -16,7 +16,7 @@ var accountVS *verify.SMTPVerifyService
 
 func init() {
 	accountModel = new(UserModel)
-	accountMgr = beaccount.NewAccountService("app", accountModel)
+	accountMgr = beaccount.NewAccountMgr("app", accountModel)
 	pwdEncryptorSalt = encrypt.NewSaultEncryptor("@!#!@", "12ws")
 	// intialize verify service
 	idGen := idgen.NewRandomIdGenerator(32)

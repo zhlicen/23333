@@ -1,22 +1,21 @@
 package beaccount
 
-
 type AccountModel interface {
 	Add(accountInfo *AccountInfo) error
-	Delete(uid AccountUid) error
+	Delete(uid string) error
 
-	GetUidById(idName IdName, id string) (AccountUid, error)
-	GetAccountInfo(uid AccountUid) (*AccountInfo, error)
+	GetUserId(idName IdName, loginId string) (*UserId, error)
+	GetAccountInfo(uid string) (*AccountInfo, error)
 
-	GetAccountBaseInfo(uid AccountUid) (*AccountBaseInfo, error)
-	GetOAuth2Id(uid AccountUid) (map[KeyName]string, error)
-	GetProfiles(uid AccountUid) (map[KeyName]string, error)
-	GetOthers(uid AccountUid) (map[KeyName]string, error)
-	GetAccountStatus(uid AccountUid) (*AccountStatus, error)
+	GetAccountBaseInfo(uid string) (*AccountBaseInfo, error)
+	GetOAuth2Id(uid string) (map[KeyName]string, error)
+	GetProfiles(uid string) (map[KeyName]string, error)
+	GetOthers(uid string) (map[KeyName]string, error)
+	GetAccountStatus(uid string) (*AccountStatus, error)
 
-	UpdateAccountBaseInfo(uid AccountUid, baseInfo *AccountBaseInfo) error
-	UpdateOAuth2Id(uid AccountUid, ids map[KeyName]string) error
-	UpdateProfiles(uid AccountUid, profiles map[KeyName]string) error
-	UpdateOthers(uid AccountUid, others map[KeyName]string) error
-	UpdateAccountStatus(uid AccountUid, status *AccountStatus) error
+	UpdateAccountBaseInfo(uid string, baseInfo *AccountBaseInfo) error
+	UpdateOAuth2Id(uid string, ids map[KeyName]string) error
+	UpdateProfiles(uid string, profiles map[KeyName]string) error
+	UpdateOthers(uid string, others map[KeyName]string) error
+	UpdateAccountStatus(uid string, status *AccountStatus) error
 }

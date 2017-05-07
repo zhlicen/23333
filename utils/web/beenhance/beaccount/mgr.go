@@ -11,21 +11,17 @@ import (
 	"github.com/astaxie/beego/session"
 )
 
-type AccountAction int
-
-const (
-	Register AccountAction = iota
-	Login
-	LogoutSession
-)
-
-type AccountActionFilter interface {
-	onActionStart(action AccountAction, c *context.Context, params ...interface{}) bool
-	onActionResult(action AccountAction, c *context.Context, params ...interface{})
-}
+var mgrsStore map[string]*AccountMgr
 
 type sessionKeys struct {
 	loginUser string
+}
+
+type accountInvoker struct {
+	model        AccountModel
+	loginUserId  *UserId
+	invokeUserId *UserId
+	context      *context.Context
 }
 
 type AccountMgr struct {
@@ -33,28 +29,64 @@ type AccountMgr struct {
 	model  AccountModel
 }
 
-func NewAccountService(domain string, model AccountModel) *AccountMgr {
+func GetAccountMgr(domain string) (*AccountMgr, error) {
+	if mgrsStore != nil {
+		if mgr, ok := mgrsStore[domain]; ok {
+			return mgr, nil
+		}
+	}
+	return nil, errors.New("not exist")
+}
+
+func NewAccountMgr(domain string, model AccountModel) *AccountMgr {
+	if mgrsStore == nil {
+		mgrsStore = make(map[string]*AccountMgr)
+	} else {
+		if mgr, ok := mgrsStore[domain]; ok {
+			mgr.model = model
+			return mgr
+		}
+	}
 	if model == nil {
 		return nil
 	}
-	return &AccountMgr{domain, model}
+	mgr := &AccountMgr{domain, model}
+	mgrsStore[domain] = mgr
+	return mgr
 }
 
-func (s *AccountMgr) getOperateUid(c *context.Context) (AccountUid, error) {
+func (a *AccountMgr) getOperateUid(c *context.Context) (string, error) {
 	ss := c.Input.CruSession
 	ssUser := ss.Get("LoginUser")
 	otherUser := ss.Get("OtherUser")
 
 	if ssUser != nil {
-		return AccountUid(ssUser.(string)), nil
+		return ssUser.(string), nil
 	}
 	if otherUser != nil {
-		return AccountUid(otherUser.(string)), nil
+		return otherUser.(string), nil
 	}
 	return "", errors.New("account is logged in")
 }
 
-func (s *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
+func (a *AccountMgr) GetLoginUserId(c *context.Context) *UserId {
+	ss := c.Input.CruSession
+	if userId, ok := ss.Get("LoginUser").(UserId); ok {
+		return &userId
+	}
+	return nil
+}
+
+func (a *AccountMgr) CurrentAccount(c *context.Context) *accountInvoker {
+	userId := a.GetLoginUserId(c)
+	return &accountInvoker{a.model, userId, userId, c}
+}
+
+func (a *AccountMgr) IOtherAccount(c *context.Context, userId *UserId) *accountInvoker {
+	return &accountInvoker{a.model, a.GetLoginUserId(c), userId, c}
+}
+
+func (a *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	ss := c.Input.CruSession
 	ssUser := ss.Get("LoginUser")
 	if ssUser != nil {
@@ -64,43 +96,43 @@ func (s *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	if valErr != nil {
 		return valErr
 	}
-	return s.model.Add(info)
+	return a.model.Add(info)
 }
 
-func (s *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, id string) error {
+func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId string) error {
 	if v == nil {
 		return errors.New("invalid verifier")
 	}
 	vErr := v.Verify()
 	if vErr == nil {
-		uid, uidErr := s.GetUidById(c, id)
+		userId, uidErr := a.GetUserId(c, loginId)
 		if uidErr != nil {
 			return uidErr
 		}
-		desc, _ := MatchIdDescriptor(id)
-		baseInfo, getAccountErr := s.model.GetAccountBaseInfo(uid)
+		desc, _ := MatchIdDescriptor(loginId)
+		baseInfo, getAccountErr := a.model.GetAccountBaseInfo(userId.Uid)
 		if getAccountErr != nil {
 			return getAccountErr
 		}
-		baseInfo.Ids[desc.Name] = NewAccountId(baseInfo.Ids[desc.Name].Id, true)
-		return s.model.UpdateAccountBaseInfo(uid, baseInfo)
+		baseInfo.LoginIds[desc.Name] = NewLoginId(baseInfo.LoginIds[desc.Name].Id, true)
+		return a.model.UpdateAccountBaseInfo(userId.Uid, baseInfo)
 	}
 	return errors.New("invalid token")
 }
 
 // Require user verify
-func (s *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, id string, newPwd *AccountPwd) error {
+func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId string, newPwd *LoginPwd) error {
 	if v == nil {
 		return errors.New("invalid verifier")
 	}
 	vErr := v.Verify()
 	if vErr == nil {
-		uid, uidErr := s.GetUidById(c, id)
+		userId, uidErr := a.GetUserId(c, loginId)
 		if uidErr != nil {
 			return errors.New("unknown account")
 		}
 
-		accountBaseInfo, accountErr := s.model.GetAccountBaseInfo(uid)
+		accountBaseInfo, accountErr := a.model.GetAccountBaseInfo(userId.Uid)
 		if accountErr != nil {
 			return accountErr
 		}
@@ -108,49 +140,49 @@ func (s *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, id string,
 		newPwdRaw, newPwdErr := newPwd.GetPwd()
 		if newPwdErr == nil {
 			accountBaseInfo.Password.SetEncryptedPwd(newPwdRaw)
-			return s.model.UpdateAccountBaseInfo(uid, accountBaseInfo)
+			return a.model.UpdateAccountBaseInfo(userId.Uid, accountBaseInfo)
 		}
 	}
 	return errors.New("invalid token")
 }
 
 // Universal Interface, can be called without login
-func (s *AccountMgr) GetUidById(c *context.Context, userId string) (AccountUid, error) {
-	desc, matchErr := MatchIdDescriptor(userId)
+func (a *AccountMgr) GetUserId(c *context.Context, loginId string) (*UserId, error) {
+	desc, matchErr := MatchIdDescriptor(loginId)
 	if matchErr != nil {
-		return "", matchErr
+		return nil, matchErr
 	}
-	return s.model.GetUidById(desc.Name, userId)
+	return a.model.GetUserId(desc.Name, loginId)
 }
 
-func (s *AccountMgr) Login(c *context.Context, userId string, pwd *AccountPwd) error {
-	uid, findErr := s.GetUidById(c, userId)
+func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) error {
+	userId, findErr := a.GetUserId(c, loginId)
 	if findErr != nil {
 		return errors.New("invalid user id")
 	}
-	baseInfo, accountErr := s.model.GetAccountBaseInfo(uid)
+	baseInfo, accountErr := a.model.GetAccountBaseInfo(userId.Uid)
 	if accountErr != nil {
 		return accountErr
 	}
-	desc, _ := MatchIdDescriptor(userId)
-	if !baseInfo.Ids[desc.Name].Verified {
+	desc, _ := MatchIdDescriptor(loginId)
+	if !baseInfo.LoginIds[desc.Name].Verified {
 		return errors.New("account id not verified")
 	}
-	accountPwd, pwdErr := baseInfo.Password.GetPwd()
+	LoginPwd, pwdErr := baseInfo.Password.GetPwd()
 	if pwdErr == nil {
 		userPwd, _ := pwd.GetPwd()
-		if userPwd != accountPwd {
+		if userPwd != LoginPwd {
 			return errors.New("invalid password")
 		}
 	} else {
 		return pwdErr
 	}
 	ss := c.Input.CruSession
-	ss.Set("LoginUser", uid.String())
+	ss.Set("LoginUser", baseInfo.UserId)
 	return nil
 }
 
-func (s *AccountMgr) LogoutSession(c *context.Context, sid string) error {
+func (a *AccountMgr) LogoutSession(c *context.Context, sid string) error {
 	fmt.Println("loging out " + sid)
 	curSs := c.Input.CruSession
 	var ss session.Store
@@ -168,9 +200,9 @@ func (s *AccountMgr) LogoutSession(c *context.Context, sid string) error {
 	if ssUser == nil {
 		return errors.New("no login user with this session")
 	}
-	curUser, _ := s.getOperateUid(c)
-	fmt.Println(curUser.String() + " : " + ssUser.(string))
-	if curUser.String() != ssUser.(string) {
+	curUser, _ := a.getOperateUid(c)
+	fmt.Println(curUser + " : " + ssUser.(string))
+	if curUser != ssUser.(string) {
 		return errors.New("login user not match")
 	}
 	fmt.Println("Logged out")
@@ -182,12 +214,12 @@ func (s *AccountMgr) LogoutSession(c *context.Context, sid string) error {
 	return nil
 }
 
-func (s *AccountMgr) ChangePwd(c *context.Context, oldPwd *AccountPwd, newPwd *AccountPwd) error {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) ChangePwd(c *context.Context, oldPwd *LoginPwd, newPwd *LoginPwd) error {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return err
 	}
-	accountBaseInfo, accountErr := s.model.GetAccountBaseInfo(uid)
+	accountBaseInfo, accountErr := a.model.GetAccountBaseInfo(uid)
 	if accountErr != nil {
 		return accountErr
 	}
@@ -198,64 +230,64 @@ func (s *AccountMgr) ChangePwd(c *context.Context, oldPwd *AccountPwd, newPwd *A
 		newPwdRaw, newPwdErr := newPwd.GetPwd()
 		if newPwdErr == nil {
 			accountBaseInfo.Password.SetEncryptedPwd(newPwdRaw)
-			return s.model.UpdateAccountBaseInfo(uid, accountBaseInfo)
+			return a.model.UpdateAccountBaseInfo(uid, accountBaseInfo)
 		}
 	}
 	return nil
 }
 
-func (s *AccountMgr) GetAccountBaseInfo(c *context.Context) (*AccountBaseInfo, error) {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) GetAccountBaseInfo(c *context.Context) (*AccountBaseInfo, error) {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return nil, err
 	}
-	return s.model.GetAccountBaseInfo(uid)
+	return a.model.GetAccountBaseInfo(uid)
 }
 
-func (s *AccountMgr) UpdateAccountBaseInfo(c *context.Context, baseInfo *AccountBaseInfo) error {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) UpdateAccountBaseInfo(c *context.Context, baseInfo *AccountBaseInfo) error {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return nil
 	}
-	return s.model.UpdateAccountBaseInfo(uid, baseInfo)
+	return a.model.UpdateAccountBaseInfo(uid, baseInfo)
 }
 
-func (s *AccountMgr) GetProfiles(c *context.Context) (map[KeyName]string, error) {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) GetProfiles(c *context.Context) (map[KeyName]string, error) {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return nil, err
 	}
-	return s.model.GetProfiles(uid)
+	return a.model.GetProfiles(uid)
 }
 
-func (s *AccountMgr) UpdateProfiles(c *context.Context, profiles map[KeyName]string) error {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) UpdateProfiles(c *context.Context, profiles map[KeyName]string) error {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return err
 	}
-	return s.model.UpdateProfiles(uid, profiles)
+	return a.model.UpdateProfiles(uid, profiles)
 }
 
-func (s *AccountMgr) GetOthers(c *context.Context) (map[KeyName]string, error) {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) GetOthers(c *context.Context) (map[KeyName]string, error) {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return nil, err
 	}
-	return s.model.GetOthers(uid)
+	return a.model.GetOthers(uid)
 }
 
-func (s *AccountMgr) UpdateOthers(c *context.Context, others map[KeyName]string) error {
-	uid, err := s.getOperateUid(c)
+func (a *AccountMgr) UpdateOthers(c *context.Context, others map[KeyName]string) error {
+	uid, err := a.getOperateUid(c)
 	if err != nil {
 		return err
 	}
-	return s.model.UpdateOthers(uid, others)
+	return a.model.UpdateOthers(uid, others)
 
 }
 
 // Operation on other account, needs permission check
-func (s *AccountMgr) OtherAccount(c *context.Context, uid string) *AccountMgr {
+func (a *AccountMgr) OtherAccount(c *context.Context, uid string) *AccountMgr {
 	ss := c.Input.CruSession
 	ss.Set("OtherUser", uid)
-	return s
+	return a
 }

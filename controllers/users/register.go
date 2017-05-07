@@ -28,14 +28,14 @@ func (c *RegisterController) Post() {
 	mobile := c.GetString("mobile")
 	email := c.GetString("email")
 	accountInfo.Domain = beego.BConfig.AppName
-	accountInfo.Ids[beaccount.UserName.Name] = beaccount.NewAccountId(username)
+	accountInfo.LoginIds[beaccount.UserName.Name] = beaccount.NewLoginId(username)
 	fmt.Println("UserName:" + username)
-	accountInfo.Ids[beaccount.Mobile.Name] = beaccount.NewAccountId(mobile)
+	accountInfo.LoginIds[beaccount.Mobile.Name] = beaccount.NewLoginId(mobile)
 	fmt.Println("Mobile:" + mobile)
-	accountInfo.Ids[beaccount.Email.Name] = beaccount.NewAccountId(email, false)
+	accountInfo.LoginIds[beaccount.Email.Name] = beaccount.NewLoginId(email, false)
 	fmt.Println("Email:" + email)
 
-	accountInfo.Password.SetPwd("Password", password, accountInfo.Uid.String(), pwdEncryptorSalt)
+	accountInfo.Password.SetPwd("Password", password, accountInfo.Uid, pwdEncryptorSalt)
 	pwd, err := accountInfo.Password.GetPwd()
 	if err == nil {
 		fmt.Println("Password:" + pwd)
@@ -48,6 +48,6 @@ func (c *RegisterController) Post() {
 		c.Ctx.Redirect(302, "/register")
 		return
 	}
-	queryString := "uid=" + accountInfo.Uid.String() + "&email=" + email + "&username=" + username
+	queryString := "uid=" + accountInfo.Uid + "&email=" + email + "&username=" + username
 	c.Ctx.Redirect(302, "/sendVerify?"+queryString)
 }

@@ -24,14 +24,14 @@ func (c *LoginController) Post() {
 	password := c.GetString("password")
 	fmt.Println("username:" + username)
 	fmt.Println("password:" + password)
-	Uid, getErr := accountMgr.GetUidById(c.Ctx, username)
+	userId, getErr := accountMgr.GetUserId(c.Ctx, username)
 	if getErr != nil {
 		fmt.Println(getErr.Error())
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	userPwd := new(beaccount.AccountPwd)
-	userPwd.SetPwd("Password", password, Uid.String(), pwdEncryptorSalt)
+	userPwd := new(beaccount.LoginPwd)
+	userPwd.SetPwd("Password", password, userId.Uid, pwdEncryptorSalt)
 	loginErr := accountMgr.Login(c.Ctx, username, userPwd)
 
 	if loginErr != nil {

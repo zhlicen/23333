@@ -1,81 +1,73 @@
 package beaccount
 
 import (
+	"23333/utils/encrypt"
+	"23333/utils/idgen"
 	"errors"
 	"fmt"
 	"strings"
-	"23333/utils/encrypt"
-	"23333/utils/idgen"
 )
 
-type AccountId struct {
+type LoginId struct {
 	Id       string
 	Verified bool
 }
 
-func NewAccountId(id string, verified ...bool) AccountId {
+func NewLoginId(id string, verified ...bool) LoginId {
 	if verified == nil {
-		return AccountId{id, true}
+		return LoginId{id, true}
 	}
-	return AccountId{id, verified[0]}
+	return LoginId{id, verified[0]}
 }
 
-type AccountPwd struct {
+type LoginPwd struct {
 	pwd string
 }
 
-func (accountPwd *AccountPwd) SetPwd(descriptor KeyName,
+func (LoginPwd *LoginPwd) SetPwd(descriptor KeyName,
 	pwd string, param interface{}, encryptor encrypt.Encryptor) error {
 	var err error
 	desc, _ := GetKeyDescriptor(descriptor)
 	if desc != nil && desc.Validate(pwd) {
 		return errors.New("invalid pwd:" + desc.Description)
 	}
-	accountPwd.pwd, err = encryptor.Encrypt(pwd, param)
+	LoginPwd.pwd, err = encryptor.Encrypt(pwd, param)
 	return err
 }
 
-func (accountPwd *AccountPwd) GetPwd() (string, error) {
-	if accountPwd.pwd == "" {
+func (LoginPwd *LoginPwd) GetPwd() (string, error) {
+	if LoginPwd.pwd == "" {
 		return "", errors.New("pwd not exist")
 	}
-	return accountPwd.pwd, nil
+	return LoginPwd.pwd, nil
 }
 
-func (accountPwd *AccountPwd) SetEncryptedPwd(pwd string) {
-	accountPwd.pwd = pwd
+func (LoginPwd *LoginPwd) SetEncryptedPwd(pwd string) {
+	LoginPwd.pwd = pwd
 }
 
 type AccountStatus struct {
 	Activated  bool
 	Locked     bool
 	LockExpire string
-}
-type AccountUid string
-
-func NewAccountUid(uid string) AccountUid {
-	return AccountUid(uid)
+	Sessions   []string
 }
 
-func (a AccountUid) String() string {
-	return string(a)
-}
-
-func (a *AccountUid) SetVal(val string) {
-	*a = AccountUid(val)
+type UserId struct {
+	Domain string
+	Group  string
+	Uid    string
 }
 
 type AccountBaseInfo struct {
-	Domain   string
-	Group    string
-	Uid      AccountUid
-	Ids      map[IdName]AccountId
-	Password AccountPwd
+	UserId
+	LoginIds map[IdName]LoginId
+	Password LoginPwd
 }
 
 func NewAccountBaseInfo() *AccountBaseInfo {
 	accountBaseInfo := new(AccountBaseInfo)
-	accountBaseInfo.Ids = make(map[IdName]AccountId)
+	accountBaseInfo.LoginIds = make(map[IdName]LoginId)
 	return accountBaseInfo
 }
 
@@ -85,7 +77,7 @@ func (a *AccountBaseInfo) GenRandomUid() (string, error) {
 	if keyErr != nil {
 		return "", keyErr
 	}
-	a.Uid.SetVal(uid)
+	a.Uid = uid
 	return uid, nil
 }
 
@@ -99,7 +91,7 @@ type AccountInfo struct {
 
 func NewAccountInfo() *AccountInfo {
 	accountInfo := new(AccountInfo)
-	accountInfo.Ids = make(map[IdName]AccountId)
+	accountInfo.LoginIds = make(map[IdName]LoginId)
 	accountInfo.OAuth2Id = make(map[KeyName]string)
 	accountInfo.Profiles = make(map[KeyName]string)
 	accountInfo.Others = make(map[KeyName]string)
@@ -109,11 +101,11 @@ func NewAccountInfo() *AccountInfo {
 func (accountInfo *AccountInfo) Validate() error {
 	// validate ids
 	validIdCount := 0
-	for k, v := range accountInfo.Ids {
+	for k, v := range accountInfo.LoginIds {
 		descriptor, err := GetIdDescriptor(k)
 		if !descriptor.CaseSensitive {
 			v.Id = strings.ToLower(v.Id)
-			accountInfo.Ids[k] = v
+			accountInfo.LoginIds[k] = v
 		}
 		fmt.Println("Checking " + string(k))
 		if err == nil && !descriptor.Validate(v.Id) {

@@ -8,18 +8,19 @@ import (
 	context "github.com/astaxie/beego/context"
 )
 
+// mgrsStrore managers storage
 var mgrsStore map[string]*AccountMgr
 
-type sessionKeys struct {
-	loginUser string
-}
-
+// AccountMgr account manager
+// member:domain domain of this manager
+// member:pc permission checker of account actions
 type AccountMgr struct {
 	domain string
 	model  AccountModel
 	pc     beepermission.PermissionChecker
 }
 
+// GetAccountMgr get account manager with domain name
 func GetAccountMgr(domain string) (*AccountMgr, error) {
 	if mgrsStore != nil {
 		if mgr, ok := mgrsStore[domain]; ok {
@@ -29,6 +30,7 @@ func GetAccountMgr(domain string) (*AccountMgr, error) {
 	return nil, errors.New("not exist")
 }
 
+// NewAccountMgr constructor of AccountMgr
 func NewAccountMgr(domain string, model AccountModel, pc beepermission.PermissionChecker) *AccountMgr {
 	if mgrsStore == nil {
 		mgrsStore = make(map[string]*AccountMgr)
@@ -46,6 +48,7 @@ func NewAccountMgr(domain string, model AccountModel, pc beepermission.Permissio
 	return mgr
 }
 
+// GetLoginUserId get login user id
 func (a *AccountMgr) GetLoginUserId(c *context.Context) *UserId {
 	ss := c.Input.CruSession
 	if userId, ok := ss.Get("LoginUser").(UserId); ok {
@@ -54,15 +57,18 @@ func (a *AccountMgr) GetLoginUserId(c *context.Context) *UserId {
 	return nil
 }
 
+// CurrentAccount get current(login) account invoker
 func (a *AccountMgr) CurrentAccount(c *context.Context) *accountInvoker {
 	userId := a.GetLoginUserId(c)
 	return &accountInvoker{a.model, userId, userId, c, a}
 }
 
+// OtherAccount get other account invoker
 func (a *AccountMgr) OtherAccount(c *context.Context, userId *UserId) *accountInvoker {
 	return &accountInvoker{a.model, a.GetLoginUserId(c), userId, c, a}
 }
 
+// Register register an account with account info
 func (a *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	ss := c.Input.CruSession
 	ssUser := ss.Get("LoginUser")
@@ -76,6 +82,7 @@ func (a *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	return a.model.Add(info)
 }
 
+// VerifyId verify account login id
 func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId string) error {
 	if v == nil {
 		return errors.New("invalid verifier")
@@ -87,16 +94,17 @@ func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId st
 			return uidErr
 		}
 		desc, _ := MatchIdDescriptor(loginId)
-		baseInfo, getAccountErr := a.model.GetAccountBaseInfo(userId.Uid)
+		basicInfo, getAccountErr := a.model.GetAccountBasicInfo(userId.Uid)
 		if getAccountErr != nil {
 			return getAccountErr
 		}
-		baseInfo.LoginIds[desc.Name] = NewLoginId(baseInfo.LoginIds[desc.Name].Id, true)
-		return a.model.UpdateAccountBaseInfo(userId.Uid, baseInfo)
+		basicInfo.LoginIds[desc.Name] = NewLoginId(basicInfo.LoginIds[desc.Name].Id, true)
+		return a.model.UpdateAccountBasicInfo(userId.Uid, basicInfo)
 	}
 	return errors.New("invalid token")
 }
 
+// ResetPwd reset password
 func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId string, newPwd *LoginPwd) error {
 	if v == nil {
 		return errors.New("invalid verifier")
@@ -108,20 +116,21 @@ func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId st
 			return errors.New("unknown account")
 		}
 
-		accountBaseInfo, accountErr := a.model.GetAccountBaseInfo(userId.Uid)
+		AccountBasicInfo, accountErr := a.model.GetAccountBasicInfo(userId.Uid)
 		if accountErr != nil {
 			return accountErr
 		}
 
 		newPwdRaw, newPwdErr := newPwd.GetPwd()
 		if newPwdErr == nil {
-			accountBaseInfo.Password.SetEncryptedPwd(newPwdRaw)
-			return a.model.UpdateAccountBaseInfo(userId.Uid, accountBaseInfo)
+			AccountBasicInfo.Password.SetEncryptedPwd(newPwdRaw)
+			return a.model.UpdateAccountBasicInfo(userId.Uid, AccountBasicInfo)
 		}
 	}
 	return errors.New("invalid token")
 }
 
+// GetUserId get user id by login string
 // Universal Interface, can be called without login
 func (a *AccountMgr) GetUserId(c *context.Context, loginId string) (*UserId, error) {
 	desc, matchErr := MatchIdDescriptor(loginId)
@@ -131,20 +140,21 @@ func (a *AccountMgr) GetUserId(c *context.Context, loginId string) (*UserId, err
 	return a.model.GetUserId(desc.Name, loginId)
 }
 
+// Login login an account with password
 func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) error {
 	userId, findErr := a.GetUserId(c, loginId)
 	if findErr != nil {
 		return errors.New("invalid user id")
 	}
-	baseInfo, accountErr := a.model.GetAccountBaseInfo(userId.Uid)
+	basicInfo, accountErr := a.model.GetAccountBasicInfo(userId.Uid)
 	if accountErr != nil {
 		return accountErr
 	}
 	desc, _ := MatchIdDescriptor(loginId)
-	if !baseInfo.LoginIds[desc.Name].Verified {
+	if !basicInfo.LoginIds[desc.Name].Verified {
 		return errors.New("account id not verified")
 	}
-	LoginPwd, pwdErr := baseInfo.Password.GetPwd()
+	LoginPwd, pwdErr := basicInfo.Password.GetPwd()
 	if pwdErr == nil {
 		userPwd, _ := pwd.GetPwd()
 		if userPwd != LoginPwd {
@@ -154,6 +164,6 @@ func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) er
 		return pwdErr
 	}
 	ss := c.Input.CruSession
-	ss.Set("LoginUser", baseInfo.UserId)
+	ss.Set("LoginUser", basicInfo.UserId)
 	return nil
 }

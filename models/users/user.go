@@ -101,7 +101,7 @@ func (u *UserModel) GetAccountInfo(uid string) (*beeaccount.AccountInfo, error) 
 	return accountInfo, nil
 }
 
-func (u *UserModel) GetAccountBaseInfo(uid string) (*beeaccount.AccountBaseInfo, error) {
+func (u *UserModel) GetAccountBasicInfo(uid string) (*beeaccount.AccountBasicInfo, error) {
 	user := User{}
 	user.Uid = uid
 
@@ -111,7 +111,7 @@ func (u *UserModel) GetAccountBaseInfo(uid string) (*beeaccount.AccountBaseInfo,
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountBaseInfo := beeaccount.NewAccountBaseInfo()
+	accountBaseInfo := beeaccount.NewAccountBasicInfo()
 	accountBaseInfo.Uid = user.Uid
 	accountBaseInfo.LoginIds[beeaccount.UserName.Name] = beeaccount.NewLoginId(user.Username)
 	accountBaseInfo.LoginIds[beeaccount.Email.Name] = beeaccount.NewLoginId(user.Email)
@@ -136,7 +136,7 @@ func (u *UserModel) GetAccountStatus(uid string) (*beeaccount.AccountStatus, err
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateAccountBaseInfo(uid string, baseInfo *beeaccount.AccountBaseInfo) error {
+func (u *UserModel) UpdateAccountBasicInfo(uid string, baseInfo *beeaccount.AccountBasicInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
 	user.Uid = baseInfo.Uid

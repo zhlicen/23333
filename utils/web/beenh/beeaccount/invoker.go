@@ -8,6 +8,12 @@ import (
 	"github.com/astaxie/beego/session"
 )
 
+// accountInvoker invoker for account functions
+// member:model model implementation
+// member:loginUserId current login user id
+// member:invokeUserId invoke user id
+// member:context beego context
+// member:mgr account manager
 type accountInvoker struct {
 	model        AccountModel
 	loginUserId  *UserId
@@ -16,19 +22,22 @@ type accountInvoker struct {
 	mgr          *AccountMgr
 }
 
+// AccountAction account action
 type AccountAction int
 
+// Account Actions definition
 const (
 	Account_LogoutSession AccountAction = iota
 	Account_ChangePwd
-	Account_GetAccountBaseInfo
-	Account_UpdateAccountBaseInfo
+	Account_GetAccountBasicInfo
+	Account_UpdateAccountBasicInfo
 	Account_GetProfiles
 	Account_UpdateProfiles
 	Account_GetOthers
 	Account_UpdateOthers
 )
 
+// checkPermission check permission of this action
 func (a *accountInvoker) checkPermission(action AccountAction) error {
 	if a.mgr.pc != nil {
 		return a.mgr.pc.Check(a.loginUserId, a.invokeUserId, action)
@@ -36,6 +45,8 @@ func (a *accountInvoker) checkPermission(action AccountAction) error {
 	return nil
 }
 
+// LogoutSession logout session with session id
+// sid is the id of session to be logged out
 func (a *accountInvoker) LogoutSession(sid string) error {
 	perErr := a.checkPermission(Account_LogoutSession)
 	if perErr != nil {
@@ -75,47 +86,54 @@ func (a *accountInvoker) LogoutSession(sid string) error {
 	return nil
 }
 
+// ChangePwd change password
+// oldPwd is the old password
+// newPwd is the new password
+// returns error
 func (a *accountInvoker) ChangePwd(oldPwd *LoginPwd, newPwd *LoginPwd) error {
 	perErr := a.checkPermission(Account_ChangePwd)
 	if perErr != nil {
 		return perErr
 	}
 	uid := a.invokeUserId.Uid
-	accountBaseInfo, accountErr := a.model.GetAccountBaseInfo(uid)
+	AccountBasicInfo, accountErr := a.model.GetAccountBasicInfo(uid)
 	if accountErr != nil {
 		return accountErr
 	}
-	oldPwdSaved, oldPwdSavedErr := accountBaseInfo.Password.GetPwd()
+	oldPwdSaved, oldPwdSavedErr := AccountBasicInfo.Password.GetPwd()
 	oldPwdUser, oldPwdUserErr := oldPwd.GetPwd()
 
 	if oldPwdSavedErr == nil && oldPwdUserErr == nil && oldPwdSaved == oldPwdUser {
 		newPwdRaw, newPwdErr := newPwd.GetPwd()
 		if newPwdErr == nil {
-			accountBaseInfo.Password.SetEncryptedPwd(newPwdRaw)
-			return a.model.UpdateAccountBaseInfo(uid, accountBaseInfo)
+			AccountBasicInfo.Password.SetEncryptedPwd(newPwdRaw)
+			return a.model.UpdateAccountBasicInfo(uid, AccountBasicInfo)
 		}
 	}
 	return nil
 }
 
-func (a *accountInvoker) GetAccountBaseInfo() (*AccountBaseInfo, error) {
-	perErr := a.checkPermission(Account_GetAccountBaseInfo)
+// GetAccountBasicInfo get account basic info
+func (a *accountInvoker) GetAccountBasicInfo() (*AccountBasicInfo, error) {
+	perErr := a.checkPermission(Account_GetAccountBasicInfo)
 	if perErr != nil {
 		return nil, perErr
 	}
 	uid := a.invokeUserId.Uid
-	return a.model.GetAccountBaseInfo(uid)
+	return a.model.GetAccountBasicInfo(uid)
 }
 
-func (a *accountInvoker) UpdateAccountBaseInfo(baseInfo *AccountBaseInfo) error {
-	perErr := a.checkPermission(Account_UpdateAccountBaseInfo)
+// UpdateAccountBasicInfo update account basic info
+func (a *accountInvoker) UpdateAccountBasicInfo(basicInfo *AccountBasicInfo) error {
+	perErr := a.checkPermission(Account_UpdateAccountBasicInfo)
 	if perErr != nil {
 		return perErr
 	}
 	uid := a.invokeUserId.Uid
-	return a.model.UpdateAccountBaseInfo(uid, baseInfo)
+	return a.model.UpdateAccountBasicInfo(uid, basicInfo)
 }
 
+// GetProfiles get profiles
 func (a *accountInvoker) GetProfiles() (map[KeyName]string, error) {
 	perErr := a.checkPermission(Account_GetProfiles)
 	if perErr != nil {
@@ -125,6 +143,7 @@ func (a *accountInvoker) GetProfiles() (map[KeyName]string, error) {
 	return a.model.GetProfiles(uid)
 }
 
+// UpdateProfiles update profiles
 func (a *accountInvoker) UpdateProfiles(profiles map[KeyName]string) error {
 	perErr := a.checkPermission(Account_UpdateProfiles)
 	if perErr != nil {
@@ -134,6 +153,7 @@ func (a *accountInvoker) UpdateProfiles(profiles map[KeyName]string) error {
 	return a.model.UpdateProfiles(uid, profiles)
 }
 
+// GetOthers get others
 func (a *accountInvoker) GetOthers() (map[KeyName]string, error) {
 	perErr := a.checkPermission(Account_GetOthers)
 	if perErr != nil {
@@ -143,6 +163,7 @@ func (a *accountInvoker) GetOthers() (map[KeyName]string, error) {
 	return a.model.GetOthers(uid)
 }
 
+// UpdateOthers update others
 func (a *accountInvoker) UpdateOthers(others map[KeyName]string) error {
 	perErr := a.checkPermission(Account_UpdateOthers)
 	if perErr != nil {

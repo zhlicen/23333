@@ -26,6 +26,7 @@ func (t *smtpToken) validate(timeoutSeconds uint) bool {
 	return true
 }
 
+// SMTPVerifyService
 type SMTPVerifyService struct {
 	mailTitle           string
 	mailTpl             string
@@ -37,6 +38,7 @@ type SMTPVerifyService struct {
 	smtpConfig          SMTPConfig
 }
 
+// NewSMTPVerifyService
 func NewSMTPVerifyService(mailTpl string, tokenTimeoutSeconds uint, tokenGen idgen.IdGenerator,
 	smtpConfig SMTPConfig) *SMTPVerifyService {
 	vs := &SMTPVerifyService{mailTpl: mailTpl, tokenTimeoutSeconds: tokenTimeoutSeconds,

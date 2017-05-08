@@ -1,8 +1,11 @@
 package beeaccount
 
-var Email *IdDescriptor
-var Mobile *IdDescriptor
-var UserName *IdDescriptor
+// some pre-defined IdDescriptors
+var (
+	Email    *IdDescriptor
+	Mobile   *IdDescriptor
+	UserName *IdDescriptor
+)
 
 func initIds() {
 	UserName, _ = NewIdDescriptor("UserName", `^[a-z]{1}[\w_]{3,15}$`, false, "User Name")

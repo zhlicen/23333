@@ -13,11 +13,13 @@ import (
 	"time"
 )
 
+// smtpToken smtp token
 type smtpToken struct {
 	token   string
 	genTime time.Time
 }
 
+// validate validate the token with timeout param
 func (t *smtpToken) validate(timeoutSeconds uint) bool {
 	timeout := t.genTime.Add(time.Duration(timeoutSeconds) * time.Second)
 	if time.Now().After(timeout) {
@@ -26,7 +28,7 @@ func (t *smtpToken) validate(timeoutSeconds uint) bool {
 	return true
 }
 
-// SMTPVerifyService
+// SMTPVerifyService SMTP verify service
 type SMTPVerifyService struct {
 	mailTitle           string
 	mailTpl             string
@@ -38,7 +40,12 @@ type SMTPVerifyService struct {
 	smtpConfig          SMTPConfig
 }
 
-// NewSMTPVerifyService
+// NewSMTPVerifyService constructor of SMTPVerifyService
+// mailTpl is the tpl file path of the mail tamplate
+// tokenTimeoutSeconds is the timeout with seconds of every token
+// tokenGen is the generator of token
+// smtpConfig smtp configuration
+// returns the service constructed
 func NewSMTPVerifyService(mailTpl string, tokenTimeoutSeconds uint, tokenGen idgen.IdGenerator,
 	smtpConfig SMTPConfig) *SMTPVerifyService {
 	vs := &SMTPVerifyService{mailTpl: mailTpl, tokenTimeoutSeconds: tokenTimeoutSeconds,
@@ -49,6 +56,7 @@ func NewSMTPVerifyService(mailTpl string, tokenTimeoutSeconds uint, tokenGen idg
 	return vs
 }
 
+// gc garbage collection routine
 func (s *SMTPVerifyService) gc() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -61,10 +69,12 @@ func (s *SMTPVerifyService) gc() {
 	time.AfterFunc(time.Duration(2)*time.Second, func() { go s.gc() })
 }
 
+// AddMailTplData Add default mail template parameter
 func (s *SMTPVerifyService) AddMailTplData(key string, val string) {
 	s.mailTplData[key] = val
 }
 
+// SetMailTitle set default mail title
 func (s *SMTPVerifyService) SetMailTitle(title string) {
 	s.mailTitle = title
 }
@@ -79,6 +89,13 @@ func mergeMaps(mapTo map[string]string, maps ...interface{}) {
 	}
 }
 
+// SendToken send token via smtp
+// key is the unique key user specified for verifying token
+// params[0] is net/mail.Address, where the verify mail sent to
+// params[1] is string of mail title, if not specified, default title will be used
+// params[2] is map[string]string of the template params, params will be
+// merged with default params set with AddMailTplData, and params with same keys will be covered
+// returns error
 func (s *SMTPVerifyService) SendToken(key string, params ...interface{}) error {
 	token, err := s.tokenGenerator.Generate()
 	if err != nil {
@@ -127,6 +144,7 @@ func (s *SMTPVerifyService) SendToken(key string, params ...interface{}) error {
 
 }
 
+// Verify verify token with key
 func (s *SMTPVerifyService) Verify(key string, token string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -140,6 +158,7 @@ func (s *SMTPVerifyService) Verify(key string, token string) error {
 	return errors.New("invalid token")
 }
 
+// sendMail send mail
 func (s *SMTPVerifyService) sendMail(title string, to mail.Address, content string) {
 	config := s.smtpConfig
 
@@ -183,6 +202,7 @@ func (s *SMTPVerifyService) genMailContent(data interface{}) (string, error) {
 	return buf.String(), nil
 }
 
+// SMTPConfig smtp configuration
 type SMTPConfig struct {
 	SMTPServer string
 	Account    string

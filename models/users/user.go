@@ -42,10 +42,10 @@ func (u *UserModel) Add(accountInfo *beeaccount.AccountInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
 	user.Uid = accountInfo.Uid
-	user.Username = accountInfo.LoginIds[beeaccount.UserName.Name].Id
-	user.Email = accountInfo.LoginIds[beeaccount.Email.Name].Id
-	user.EmailVerified = accountInfo.LoginIds[beeaccount.Email.Name].Verified
-	user.Mobile = accountInfo.LoginIds[beeaccount.Mobile.Name].Id
+	user.Username = accountInfo.LoginIds["UserName"].Id
+	user.Email = accountInfo.LoginIds["Email"].Id
+	user.EmailVerified = accountInfo.LoginIds["Email"].Verified
+	user.Mobile = accountInfo.LoginIds["Mobile"].Id
 	user.Regtime = time.Now().Format("2006-01-02 15:04:05")
 	user.Password, _ = accountInfo.Password.GetPwd()
 
@@ -57,21 +57,21 @@ func (u *UserModel) Delete(uid string) error {
 	return errors.New("not supported")
 }
 
-func (u *UserModel) GetUserId(idName beeaccount.IdName, loginId string) (*beeaccount.UserId, error) {
+func (u *UserModel) GetUserId(idName string, loginId string) (*beeaccount.UserId, error) {
 	user := User{}
 	var column string
 	switch idName {
-	case beeaccount.UserName.Name:
+	case "UserName":
 		column = "UserName"
 		user.Username = loginId
-	case beeaccount.Email.Name:
+	case "Email":
 		column = "Email"
 		user.Email = loginId
-	case beeaccount.Mobile.Name:
+	case "Mobile":
 		column = "Mobile"
 		user.Mobile = loginId
 	default:
-		return nil, errors.New("not found")
+		return nil, errors.New(idName + "not found")
 	}
 	fmt.Println(column + "::" + loginId)
 	o := orm.NewOrm()
@@ -92,11 +92,11 @@ func (u *UserModel) GetAccountInfo(uid string) (*beeaccount.AccountInfo, error) 
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountInfo := beeaccount.NewAccountInfo()
+	accountInfo := beeaccount.NewAccountInfo("23333")
 	accountInfo.Uid = user.Uid
-	accountInfo.LoginIds[beeaccount.UserName.Name] = beeaccount.NewLoginId(user.Username)
-	accountInfo.LoginIds[beeaccount.Email.Name] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
-	accountInfo.LoginIds[beeaccount.Mobile.Name] = beeaccount.NewLoginId(user.Mobile)
+	accountInfo.LoginIds["UserName"] = beeaccount.NewLoginId(user.Username)
+	accountInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
+	accountInfo.LoginIds["Mobile"] = beeaccount.NewLoginId(user.Mobile)
 	accountInfo.Password.SetEncryptedPwd(user.Password)
 	return accountInfo, nil
 }
@@ -111,25 +111,25 @@ func (u *UserModel) GetAccountBasicInfo(uid string) (*beeaccount.AccountBasicInf
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountBaseInfo := beeaccount.NewAccountBasicInfo()
+	accountBaseInfo := beeaccount.NewAccountBasicInfo("23333")
 	accountBaseInfo.Uid = user.Uid
-	accountBaseInfo.LoginIds[beeaccount.UserName.Name] = beeaccount.NewLoginId(user.Username)
-	accountBaseInfo.LoginIds[beeaccount.Email.Name] = beeaccount.NewLoginId(user.Email)
-	accountBaseInfo.LoginIds[beeaccount.Email.Name] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
-	accountBaseInfo.LoginIds[beeaccount.Mobile.Name] = beeaccount.NewLoginId(user.Mobile)
+	accountBaseInfo.LoginIds["UserName"] = beeaccount.NewLoginId(user.Username)
+	accountBaseInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email)
+	accountBaseInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
+	accountBaseInfo.LoginIds["Mobile"] = beeaccount.NewLoginId(user.Mobile)
 	accountBaseInfo.Password.SetEncryptedPwd(user.Password)
 	return accountBaseInfo, nil
 }
 
-func (u *UserModel) GetOAuth2Id(uid string) (map[beeaccount.KeyName]string, error) {
+func (u *UserModel) GetOAuth2Id(uid string) (map[string]string, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) GetProfiles(uid string) (map[beeaccount.KeyName]string, error) {
+func (u *UserModel) GetProfiles(uid string) (map[string]string, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (u *UserModel) GetOthers(uid string) (map[beeaccount.KeyName]string, error) {
+func (u *UserModel) GetOthers(uid string) (map[string]string, error) {
 	return nil, errors.New("not implemented")
 }
 func (u *UserModel) GetAccountStatus(uid string) (*beeaccount.AccountStatus, error) {
@@ -141,25 +141,25 @@ func (u *UserModel) UpdateAccountBasicInfo(uid string, baseInfo *beeaccount.Acco
 	user := new(User)
 	user.Uid = baseInfo.Uid
 	o.Read(user)
-	user.Username = baseInfo.LoginIds[beeaccount.UserName.Name].Id
-	user.Email = baseInfo.LoginIds[beeaccount.Email.Name].Id
-	user.EmailVerified = baseInfo.LoginIds[beeaccount.Email.Name].Verified
-	user.Mobile = baseInfo.LoginIds[beeaccount.Mobile.Name].Id
+	user.Username = baseInfo.LoginIds["UserName"].Id
+	user.Email = baseInfo.LoginIds["Email"].Id
+	user.EmailVerified = baseInfo.LoginIds["Email"].Verified
+	user.Mobile = baseInfo.LoginIds["Mobile"].Id
 	user.Password, _ = baseInfo.Password.GetPwd()
 	fmt.Println(user)
 	_, err := o.Update(user)
 	return err
 }
 
-func (u *UserModel) UpdateOAuth2Id(uid string, ids map[beeaccount.KeyName]string) error {
+func (u *UserModel) UpdateOAuth2Id(uid string, ids map[string]string) error {
 	return errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateProfiles(uid string, profiles map[beeaccount.KeyName]string) error {
+func (u *UserModel) UpdateProfiles(uid string, profiles map[string]string) error {
 	return errors.New("not implemented")
 }
 
-func (u *UserModel) UpdateOthers(uid string, others map[beeaccount.KeyName]string) error {
+func (u *UserModel) UpdateOthers(uid string, others map[string]string) error {
 	return errors.New("not implemented")
 }
 

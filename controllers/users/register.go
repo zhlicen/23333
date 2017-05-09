@@ -21,22 +21,26 @@ func (c *RegisterController) Get() {
 }
 
 func (c *RegisterController) Post() {
-	accountInfo := beeaccount.NewAccountInfo()
+	accountInfo := beeaccount.NewAccountInfo("23333")
+	accountInfo.Group = "customer"
 	accountInfo.GenRandomUid()
 	username := c.GetString("username")
 	password := c.GetString("password")
 	mobile := c.GetString("mobile")
 	email := c.GetString("email")
 	accountInfo.Domain = beego.BConfig.AppName
-	accountInfo.LoginIds[beeaccount.UserName.Name] = beeaccount.NewLoginId(username)
+	accountInfo.LoginIds[UserName] = beeaccount.NewLoginId(username)
 	fmt.Println("UserName:" + username)
-	accountInfo.LoginIds[beeaccount.Mobile.Name] = beeaccount.NewLoginId(mobile)
+	accountInfo.LoginIds[Mobile] = beeaccount.NewLoginId(mobile)
 	fmt.Println("Mobile:" + mobile)
-	accountInfo.LoginIds[beeaccount.Email.Name] = beeaccount.NewLoginId(email, false)
+	accountInfo.LoginIds[Email] = beeaccount.NewLoginId(email)
 	fmt.Println("Email:" + email)
 
-	accountInfo.Password.SetPwd("Password", password, accountInfo.Uid, pwdEncryptorSalt)
+	setErr := accountInfo.Password.SetPwd("23333", password, accountInfo.Uid, pwdEncryptorSalt)
 	pwd, err := accountInfo.Password.GetPwd()
+	if setErr != nil {
+		fmt.Println(setErr)
+	}
 	if err == nil {
 		fmt.Println("Password:" + pwd)
 	} else {

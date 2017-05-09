@@ -93,12 +93,19 @@ func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId st
 		if uidErr != nil {
 			return uidErr
 		}
-		desc, _ := MatchIdDescriptor(loginId)
+		accountSchema, schemaErr := GetAccountSchema(a.domain)
+		if schemaErr != nil {
+			return schemaErr
+		}
+		name, matchErr := accountSchema.MatchLoginId(loginId)
+		if matchErr != nil {
+			return matchErr
+		}
 		basicInfo, getAccountErr := a.model.GetAccountBasicInfo(userId.Uid)
 		if getAccountErr != nil {
 			return getAccountErr
 		}
-		basicInfo.LoginIds[desc.Name] = NewLoginId(basicInfo.LoginIds[desc.Name].Id, true)
+		basicInfo.LoginIds[name] = NewLoginId(basicInfo.LoginIds[name].Id, true)
 		return a.model.UpdateAccountBasicInfo(userId.Uid, basicInfo)
 	}
 	return errors.New("invalid token")
@@ -133,11 +140,15 @@ func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId st
 // GetUserId get user id by login string
 // Universal Interface, can be called without login
 func (a *AccountMgr) GetUserId(c *context.Context, loginId string) (*UserId, error) {
-	desc, matchErr := MatchIdDescriptor(loginId)
+	accountSchema, schemaErr := GetAccountSchema(a.domain)
+	if schemaErr != nil {
+		return nil, schemaErr
+	}
+	name, matchErr := accountSchema.MatchLoginId(loginId)
 	if matchErr != nil {
 		return nil, matchErr
 	}
-	return a.model.GetUserId(desc.Name, loginId)
+	return a.model.GetUserId(name, loginId)
 }
 
 // Login login an account with password
@@ -150,8 +161,15 @@ func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) er
 	if accountErr != nil {
 		return accountErr
 	}
-	desc, _ := MatchIdDescriptor(loginId)
-	if !basicInfo.LoginIds[desc.Name].Verified {
+	accountSchema, schemaErr := GetAccountSchema(a.domain)
+	if schemaErr != nil {
+		return schemaErr
+	}
+	name, matchErr := accountSchema.MatchLoginId(loginId)
+	if matchErr != nil {
+		return matchErr
+	}
+	if !basicInfo.LoginIds[name].Verified {
 		return errors.New("account id not verified")
 	}
 	LoginPwd, pwdErr := basicInfo.Password.GetPwd()

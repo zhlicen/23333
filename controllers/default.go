@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"23333/controllers/users"
-
 	"github.com/astaxie/beego"
 )
 
@@ -11,11 +9,11 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
-	userId := users.AccountMgr.GetLoginUserId(c.Ctx)
-	if userId == nil {
+	userName := c.GetSession("UserName")
+	if userName == nil {
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
-	c.Data["LoginUser"] = userId.Uid
+	c.Data["LoginUser"] = userName.(string)
 	c.TplName = "index.tpl"
 }

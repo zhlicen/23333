@@ -134,7 +134,7 @@ func (a *accountInvoker) UpdateAccountBasicInfo(basicInfo *AccountBasicInfo) err
 }
 
 // GetProfiles get profiles
-func (a *accountInvoker) GetProfiles() (map[KeyName]string, error) {
+func (a *accountInvoker) GetProfiles() (map[string]string, error) {
 	perErr := a.checkPermission(Account_GetProfiles)
 	if perErr != nil {
 		return nil, perErr
@@ -144,7 +144,7 @@ func (a *accountInvoker) GetProfiles() (map[KeyName]string, error) {
 }
 
 // UpdateProfiles update profiles
-func (a *accountInvoker) UpdateProfiles(profiles map[KeyName]string) error {
+func (a *accountInvoker) UpdateProfiles(profiles map[string]string) error {
 	perErr := a.checkPermission(Account_UpdateProfiles)
 	if perErr != nil {
 		return perErr
@@ -154,7 +154,7 @@ func (a *accountInvoker) UpdateProfiles(profiles map[KeyName]string) error {
 }
 
 // GetOthers get others
-func (a *accountInvoker) GetOthers() (map[KeyName]string, error) {
+func (a *accountInvoker) GetOthers() (map[string]string, error) {
 	perErr := a.checkPermission(Account_GetOthers)
 	if perErr != nil {
 		return nil, perErr
@@ -164,7 +164,7 @@ func (a *accountInvoker) GetOthers() (map[KeyName]string, error) {
 }
 
 // UpdateOthers update others
-func (a *accountInvoker) UpdateOthers(others map[KeyName]string) error {
+func (a *accountInvoker) UpdateOthers(others map[string]string) error {
 	perErr := a.checkPermission(Account_UpdateOthers)
 	if perErr != nil {
 		return perErr

@@ -31,7 +31,7 @@ func (c *LoginController) Post() {
 		return
 	}
 	userPwd := new(beeaccount.LoginPwd)
-	userPwd.SetPwd("Password", password, userId.Uid, pwdEncryptorSalt)
+	userPwd.SetPwd("23333", password, userId.Uid, pwdEncryptorSalt)
 	loginErr := AccountMgr.Login(c.Ctx, username, userPwd)
 
 	if loginErr != nil {
@@ -39,5 +39,7 @@ func (c *LoginController) Post() {
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
+	accountInfo, _ := AccountMgr.CurrentAccount(c.Ctx).GetAccountBasicInfo()
+	c.SetSession("UserName", accountInfo.LoginIds[UserName].Id)
 	c.Ctx.Redirect(302, "/")
 }

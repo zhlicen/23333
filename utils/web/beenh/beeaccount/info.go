@@ -5,8 +5,6 @@ import (
 	"23333/utils/idgen"
 	"encoding/gob"
 	"errors"
-	"fmt"
-	"strings"
 )
 
 func initAccountInfo() {
@@ -45,12 +43,19 @@ type LoginPwd struct {
 // param is the encrypt param of encryptor
 // encryptor is the encrypt method of this password
 // returns error if there's any
-func (LoginPwd *LoginPwd) SetPwd(descriptor KeyName,
+func (LoginPwd *LoginPwd) SetPwd(domain string,
 	pwd string, param interface{}, encryptor encrypt.Encryptor) error {
 	var err error
-	desc, _ := GetKeyDescriptor(descriptor)
-	if desc != nil && desc.Validate(pwd) {
-		return errors.New("invalid pwd:" + desc.Description)
+	accountSchema, schemaErr := GetAccountSchema(domain)
+	if schemaErr != nil {
+		return errors.New("no schema for domian " + domain)
+	}
+	pwdSchema := accountSchema.GetPasswordSchema()
+	if pwdSchema == nil {
+		return errors.New("no password schema specified")
+	}
+	if pwdSchema.Validator.Validate(pwd) {
+		return errors.New("invalid pwd format")
 	}
 	LoginPwd.pwd, err = encryptor.Encrypt(pwd, param)
 	return err
@@ -96,14 +101,15 @@ type UserId struct {
 // member:Password password for account
 type AccountBasicInfo struct {
 	UserId
-	LoginIds map[IdName]LoginId
+	LoginIds map[string]LoginId
 	Password LoginPwd
 }
 
 // NewAccountBasicInfo constructor of AccountBasicInfo
-func NewAccountBasicInfo() *AccountBasicInfo {
+func NewAccountBasicInfo(domain string) *AccountBasicInfo {
 	accountBasicInfo := new(AccountBasicInfo)
-	accountBasicInfo.LoginIds = make(map[IdName]LoginId)
+	accountBasicInfo.Domain = domain
+	accountBasicInfo.LoginIds = make(map[string]LoginId)
 	return accountBasicInfo
 }
 
@@ -125,63 +131,90 @@ func (a *AccountBasicInfo) GenRandomUid() (string, error) {
 // member:Status status of account
 type AccountInfo struct {
 	AccountBasicInfo
-	Profiles map[KeyName]string
-	Others   map[KeyName]string
+	Profiles map[string]interface{}
+	Others   map[string]interface{}
 	Status   AccountStatus
 }
 
 // NewAccountInfo constructor of AccountInfo
-func NewAccountInfo() *AccountInfo {
+func NewAccountInfo(domain string) *AccountInfo {
 	accountInfo := new(AccountInfo)
-	accountInfo.LoginIds = make(map[IdName]LoginId)
-	accountInfo.Profiles = make(map[KeyName]string)
-	accountInfo.Others = make(map[KeyName]string)
+	accountInfo.Domain = domain
+	accountInfo.LoginIds = make(map[string]LoginId)
+	accountInfo.Profiles = make(map[string]interface{})
+	accountInfo.Others = make(map[string]interface{})
 	return accountInfo
+}
+
+func mergeMaps(maps ...map[string]interface{}) map[string]interface{} {
+	merged := make(map[string]interface{})
+	for _, mapOne := range maps {
+		for k, v := range mapOne {
+			merged[k] = v
+		}
+	}
+	return merged
 }
 
 // Validate check if the account info is valid with descriptors defined
 func (accountInfo *AccountInfo) Validate() error {
-	// validate ids
-	validIdCount := 0
+	accountSchema, _ := GetAccountSchema(accountInfo.Domain)
+	if accountSchema == nil {
+		return errors.New("schema undefined for domain " + accountInfo.Domain)
+	}
+
+	// Group
+	if !accountSchema.IsGroupExist(accountInfo.Group) {
+		return errors.New("unknown group " + accountInfo.Group)
+	}
+
+	// UserId
+	if accountInfo.Uid == "" {
+		return errors.New("uid can not be empty")
+	}
+
+	// LoginIds
+	if len(accountInfo.LoginIds) == 0 {
+		return errors.New("should have at least one login id")
+	}
+	requiredIds := accountSchema.getRequiredLogIds()
+	for _, requiredId := range requiredIds {
+		if _, ok := accountInfo.LoginIds[requiredId]; !ok {
+			return errors.New("login id:" + requiredId + " is required but not specified")
+		}
+	}
 	for k, v := range accountInfo.LoginIds {
-		descriptor, err := GetIdDescriptor(k)
-		if !descriptor.CaseSensitive {
-			v.Id = strings.ToLower(v.Id)
-			accountInfo.LoginIds[k] = v
-		}
-		fmt.Println("Checking " + string(k))
-		if err == nil && !descriptor.Validate(v.Id) {
-			return errors.New(string(k) + " do not match format, " + descriptor.Description)
-		}
-		validIdCount++
-	}
-	if validIdCount == 0 {
-		return errors.New("no valid id")
-	}
-
-	for k, v := range accountInfo.Profiles {
-		descriptor, err := GetKeyDescriptor(k)
-		if !descriptor.CaseSensitive {
-			v = strings.ToLower(v)
-			accountInfo.Profiles[k] = v
-		}
-		fmt.Println("Checking " + string(k))
-		if err == nil && !descriptor.Validate(v) {
-			return errors.New(string(k) + " do not match format, " + descriptor.Description)
-
+		loginIdSchema, _ := accountSchema.GetLoginIdSchema(k)
+		if loginIdSchema == nil {
+			return errors.New("login id schema for " + k + " is not defined")
+		} else {
+			if !loginIdSchema.NeedVerified {
+				v.Verified = true
+				// accountInfo.LoginIds[k] = v
+			}
+			if !loginIdSchema.Validator.Validate(v.Id) {
+				return errors.New("invalid format of login id " + k + ":" + v.Id)
+			}
 		}
 	}
 
-	for k, v := range accountInfo.Others {
-		descriptor, err := GetKeyDescriptor(k)
-		if !descriptor.CaseSensitive {
-			v = strings.ToLower(v)
-			accountInfo.Others[k] = v
+	// options
+	optionsMap := mergeMaps(accountInfo.Profiles, accountInfo.Others)
+	requiredOptions := accountSchema.getRequiredOptions()
+	for _, requiredOption := range requiredOptions {
+		if _, ok := optionsMap[requiredOption]; !ok {
+			return errors.New("option:" + requiredOption + " is required but not specified")
 		}
-		fmt.Println("Checking " + string(k))
-		if err == nil && !descriptor.Validate(v) {
-			return errors.New(string(k) + " do not match format, " + descriptor.Description)
+	}
 
+	for k, v := range optionsMap {
+		optionSchema, _ := accountSchema.GetOptionSchema(k)
+		if optionSchema == nil {
+			return errors.New("option schema for " + k + " is not defined")
+		} else {
+			if !optionSchema.Validator.Validate(v) {
+				return errors.New("invalid format of option " + k)
+			}
 		}
 	}
 

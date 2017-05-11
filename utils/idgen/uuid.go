@@ -1,6 +1,6 @@
 package idgen
 
-// randomIdGenerator generate id with random characters
+// randomIDGenerator generate id with random characters
 type uuidGenerator struct {
 }
 

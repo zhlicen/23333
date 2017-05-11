@@ -6,7 +6,7 @@ implemented some generators
 */
 package idgen
 
-// IdGenerator interface for generate id
-type IdGenerator interface {
+// IDGenerator interface for generate id
+type IDGenerator interface {
 	Generate(param ...interface{}) (string, error)
 }

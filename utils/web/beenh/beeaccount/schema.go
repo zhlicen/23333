@@ -19,11 +19,11 @@ func initAccountSchema() {
 	}
 }
 
-// loginIdSchema login id schema
+// loginIDSchema login id schema
 // member:isRequired if the id is required
 // member:needVerfied if the id needs be verified
 // member:validator validator for id string
-type LoginIdSchema struct {
+type LoginIDSchema struct {
 	UserDataBase
 	Name         string
 	IsRequired   bool
@@ -98,7 +98,7 @@ type AccountSchema struct {
 	domain         string
 	groups         map[string]interface{}
 	passwordSchema *PasswordSchema
-	loginIdSchemas map[string]*LoginIdSchema
+	loginIDSchemas map[string]*LoginIDSchema
 	optionSchemas  map[string]*OptionSchema
 }
 
@@ -157,13 +157,13 @@ func (a *AccountSchema) GetPasswordSchema() *PasswordSchema {
 	return a.passwordSchema
 }
 
-// AddLoginIdSchema add login id schema
-func (a *AccountSchema) AddLoginIdSchema(name string, isRequired bool, needVerified bool,
+// AddLoginIDSchema add login id schema
+func (a *AccountSchema) AddLoginIDSchema(name string, isRequired bool, needVerified bool,
 	ignoreCase bool, patten string, userData ...interface{}) error {
-	if _, ok := a.loginIdSchemas[name]; ok {
+	if _, ok := a.loginIDSchemas[name]; ok {
 		return errors.New("schema " + name + " exist")
 	}
-	newSchema := new(LoginIdSchema)
+	newSchema := new(LoginIDSchema)
 	newSchema.Name = name
 	newSchema.IsRequired = isRequired
 	newSchema.NeedVerified = needVerified
@@ -171,31 +171,31 @@ func (a *AccountSchema) AddLoginIdSchema(name string, isRequired bool, needVerif
 	if len(userData) > 0 {
 		newSchema.UserData = userData[0]
 	}
-	a.loginIdSchemas[name] = newSchema
+	a.loginIDSchemas[name] = newSchema
 	return nil
 }
 
-func (a *AccountSchema) getRequiredLogIds() []string {
-	var loginIdKeys []string
-	for _, v := range a.loginIdSchemas {
+func (a *AccountSchema) getRequiredLogIDs() []string {
+	var loginIDKeys []string
+	for _, v := range a.loginIDSchemas {
 		if v.IsRequired {
-			loginIdKeys = append(loginIdKeys, v.Name)
+			loginIDKeys = append(loginIDKeys, v.Name)
 		}
 	}
-	return loginIdKeys
+	return loginIDKeys
 }
 
-// GetLoginIdSchema get login id schema
-func (a *AccountSchema) GetLoginIdSchema(name string) (*LoginIdSchema, error) {
-	if v, ok := a.loginIdSchemas[name]; ok {
+// GetLoginIDSchema get login id schema
+func (a *AccountSchema) GetLoginIDSchema(name string) (*LoginIDSchema, error) {
+	if v, ok := a.loginIDSchemas[name]; ok {
 		return v, nil
 	}
 	return nil, errors.New("schema not found")
 }
 
-// MatchLoginId get login id name
-func (a *AccountSchema) MatchLoginId(id string) (string, error) {
-	for k, v := range a.loginIdSchemas {
+// MatchLoginID get login id name
+func (a *AccountSchema) MatchLoginID(id string) (string, error) {
+	for k, v := range a.loginIDSchemas {
 		if v.Validator.Validate(id) {
 			return k, nil
 		}
@@ -253,7 +253,7 @@ func (a *accountSchemaMgr) AddAccountSchema(domain string) (*AccountSchema, erro
 	}
 	accountSchema := &AccountSchema{domain: domain,
 		groups:         make(map[string]interface{}),
-		loginIdSchemas: make(map[string]*LoginIdSchema),
+		loginIDSchemas: make(map[string]*LoginIDSchema),
 		optionSchemas:  make(map[string]*OptionSchema)}
 	a.schemas[domain] = accountSchema
 	return accountSchema, nil

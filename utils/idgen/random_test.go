@@ -2,13 +2,13 @@ package idgen
 
 import "testing"
 
-func Test_randomIdGenerator_Generate(t *testing.T) {
+func Test_randomIDGenerator_Generate(t *testing.T) {
 	type args struct {
 		param []interface{}
 	}
 	tests := []struct {
 		name    string
-		g       *randomIdGenerator
+		g       *randomIDGenerator
 		args    args
 		want    string
 		wantErr bool
@@ -19,11 +19,11 @@ func Test_randomIdGenerator_Generate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.g.Generate(tt.args.param...)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("randomIdGenerator.Generate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("randomIDGenerator.Generate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("randomIdGenerator.Generate() = %v, want %v", got, tt.want)
+				t.Errorf("randomIDGenerator.Generate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

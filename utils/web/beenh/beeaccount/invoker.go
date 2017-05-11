@@ -10,14 +10,14 @@ import (
 
 // accountInvoker invoker for account functions
 // member:model model implementation
-// member:loginUserId current login user id
-// member:invokeUserId invoke user id
+// member:loginUserID current login user id
+// member:invokeUserID invoke user id
 // member:context beego context
 // member:mgr account manager
 type accountInvoker struct {
 	model        AccountModel
-	loginUserId  *UserId
-	invokeUserId *UserId
+	loginUserID  *UserID
+	invokeUserID *UserID
 	context      *context.Context
 	mgr          *AccountMgr
 }
@@ -40,7 +40,7 @@ const (
 // checkPermission check permission of this action
 func (a *accountInvoker) checkPermission(action AccountAction) error {
 	if a.mgr.pc != nil {
-		return a.mgr.pc.Check(a.loginUserId, a.invokeUserId, action)
+		return a.mgr.pc.Check(a.loginUserID, a.invokeUserID, action)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (a *accountInvoker) LogoutSession(sid string) error {
 	if perErr != nil {
 		return perErr
 	}
-	curUser := a.invokeUserId
+	curUser := a.invokeUserID
 	if curUser == nil {
 		return errors.New("Illgal invoke")
 	}
@@ -74,8 +74,8 @@ func (a *accountInvoker) LogoutSession(sid string) error {
 		return errors.New("no login user with this session")
 	}
 
-	if a.loginUserId != nil && a.loginUserId.Uid == curUser.Uid {
-		if curUser.Uid != ssUser.(UserId).Uid {
+	if a.loginUserID != nil && a.loginUserID.Uid == curUser.Uid {
+		if curUser.Uid != ssUser.(UserID).Uid {
 			return errors.New("login user not match")
 		}
 	}
@@ -95,7 +95,7 @@ func (a *accountInvoker) ChangePwd(oldPwd *LoginPwd, newPwd *LoginPwd) error {
 	if perErr != nil {
 		return perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	AccountBasicInfo, accountErr := a.model.GetAccountBasicInfo(uid)
 	if accountErr != nil {
 		return accountErr
@@ -119,7 +119,7 @@ func (a *accountInvoker) GetAccountBasicInfo() (*AccountBasicInfo, error) {
 	if perErr != nil {
 		return nil, perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.GetAccountBasicInfo(uid)
 }
 
@@ -129,7 +129,7 @@ func (a *accountInvoker) UpdateAccountBasicInfo(basicInfo *AccountBasicInfo) err
 	if perErr != nil {
 		return perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.UpdateAccountBasicInfo(uid, basicInfo)
 }
 
@@ -139,7 +139,7 @@ func (a *accountInvoker) GetProfiles() (map[string]string, error) {
 	if perErr != nil {
 		return nil, perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.GetProfiles(uid)
 }
 
@@ -149,7 +149,7 @@ func (a *accountInvoker) UpdateProfiles(profiles map[string]string) error {
 	if perErr != nil {
 		return perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.UpdateProfiles(uid, profiles)
 }
 
@@ -159,7 +159,7 @@ func (a *accountInvoker) GetOthers() (map[string]string, error) {
 	if perErr != nil {
 		return nil, perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.GetOthers(uid)
 }
 
@@ -169,7 +169,7 @@ func (a *accountInvoker) UpdateOthers(others map[string]string) error {
 	if perErr != nil {
 		return perErr
 	}
-	uid := a.invokeUserId.Uid
+	uid := a.invokeUserID.Uid
 	return a.model.UpdateOthers(uid, others)
 
 }

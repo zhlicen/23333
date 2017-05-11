@@ -19,7 +19,7 @@ func init() {
 	AccountMgr = beeaccount.NewAccountMgr("23333", accountModel, nil)
 	pwdEncryptorSalt = encrypt.NewSaultEncryptor("@!#!@", "12ws")
 	// intialize verify service
-	idGen := idgen.NewRandomIdGenerator(32)
+	idGen := idgen.NewRandomIDGenerator(32)
 	smtpConfig := verify.SMTPConfig{"smtp.sohu.com", "jjj_noreply@sohu.com", "232323",
 		mail.Address{"23333", "jjj_noreply@sohu.com"}}
 	accountVS = verify.NewSMTPVerifyService("views/mail.tpl", 60, idGen, smtpConfig)

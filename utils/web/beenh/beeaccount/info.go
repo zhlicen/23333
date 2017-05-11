@@ -8,27 +8,27 @@ import (
 )
 
 func initAccountInfo() {
-	gob.Register(UserId{})
+	gob.Register(UserID{})
 }
 
-// LoginId id for login
-// member:Id the id value string
+// LoginID id for login
+// member:ID the id value string
 // member:Verified if the id is verified
-type LoginId struct {
-	Id       string
+type LoginID struct {
+	ID       string
 	Verified bool
 }
 
-// NewLoginId constructor of LoginId
+// NewLoginID constructor of LoginID
 // param id is the id string
 // param verified
 // if param verified is not specified, true will be used default
 // return the new id constructed
-func NewLoginId(id string, verified ...bool) LoginId {
+func NewLoginID(id string, verified ...bool) LoginID {
 	if verified == nil {
-		return LoginId{id, true}
+		return LoginID{id, true}
 	}
-	return LoginId{id, verified[0]}
+	return LoginID{id, verified[0]}
 }
 
 // LoginPwd login password
@@ -85,23 +85,23 @@ type AccountStatus struct {
 	Sessions  []string
 }
 
-// UserId user identity
+// UserID user identity
 // member:Domain domain of this account
 // member:Group group of this account
 // member:Uid unique id in this domian, should be used as pk in db
-type UserId struct {
+type UserID struct {
 	Domain string
 	Group  string
 	Uid    string
 }
 
 // AccountBasicInfo account basic info
-// parent:UserId
-// member:LoginIds ids for login, id should identify one account
+// parent:UserID
+// member:LoginIDs ids for login, id should identify one account
 // member:Password password for account
 type AccountBasicInfo struct {
-	UserId
-	LoginIds map[string]LoginId
+	UserID
+	LoginIDs map[string]LoginID
 	Password LoginPwd
 }
 
@@ -109,13 +109,13 @@ type AccountBasicInfo struct {
 func NewAccountBasicInfo(domain string) *AccountBasicInfo {
 	accountBasicInfo := new(AccountBasicInfo)
 	accountBasicInfo.Domain = domain
-	accountBasicInfo.LoginIds = make(map[string]LoginId)
+	accountBasicInfo.LoginIDs = make(map[string]LoginID)
 	return accountBasicInfo
 }
 
 // GenRandomUid generate a random uid
 func (a *AccountBasicInfo) GenRandomUid() (string, error) {
-	keyGen := idgen.NewRandomIdGenerator(16, []byte(`1234567890abcdefghijklmnopqrstuvwxyz`)...)
+	keyGen := idgen.NewRandomIDGenerator(16, []byte(`1234567890abcdefghijklmnopqrstuvwxyz`)...)
 	uid, keyErr := keyGen.Generate()
 	if keyErr != nil {
 		return "", keyErr
@@ -144,7 +144,7 @@ func NewAccountInfo(domain string) (*AccountInfo, error) {
 	}
 	accountInfo := new(AccountInfo)
 	accountInfo.Domain = domain
-	accountInfo.LoginIds = make(map[string]LoginId)
+	accountInfo.LoginIDs = make(map[string]LoginID)
 	accountInfo.Profiles = make(map[string]interface{})
 	accountInfo.Others = make(map[string]interface{})
 	return accountInfo, nil
@@ -172,32 +172,32 @@ func (accountInfo *AccountInfo) Validate() error {
 		return errors.New("unknown group " + accountInfo.Group)
 	}
 
-	// UserId
+	// UserID
 	if accountInfo.Uid == "" {
 		return errors.New("uid can not be empty")
 	}
 
-	// LoginIds
-	if len(accountInfo.LoginIds) == 0 {
+	// LoginIDs
+	if len(accountInfo.LoginIDs) == 0 {
 		return errors.New("should have at least one login id")
 	}
-	requiredIds := accountSchema.getRequiredLogIds()
-	for _, requiredId := range requiredIds {
-		if _, ok := accountInfo.LoginIds[requiredId]; !ok {
-			return errors.New("login id:" + requiredId + " is required but not specified")
+	requiredIDs := accountSchema.getRequiredLogIDs()
+	for _, requiredID := range requiredIDs {
+		if _, ok := accountInfo.LoginIDs[requiredID]; !ok {
+			return errors.New("login id:" + requiredID + " is required but not specified")
 		}
 	}
-	for k, v := range accountInfo.LoginIds {
-		loginIdSchema, _ := accountSchema.GetLoginIdSchema(k)
-		if loginIdSchema == nil {
+	for k, v := range accountInfo.LoginIDs {
+		loginIDSchema, _ := accountSchema.GetLoginIDSchema(k)
+		if loginIDSchema == nil {
 			return errors.New("login id schema for " + k + " is not defined")
 		} else {
-			if !loginIdSchema.NeedVerified {
+			if !loginIDSchema.NeedVerified {
 				v.Verified = true
-				// accountInfo.LoginIds[k] = v
+				// accountInfo.LoginIDs[k] = v
 			}
-			if !loginIdSchema.Validator.Validate(v.Id) {
-				return errors.New("invalid format of login id " + k + ":" + v.Id)
+			if !loginIDSchema.Validator.Validate(v.ID) {
+				return errors.New("invalid format of login id " + k + ":" + v.ID)
 			}
 		}
 	}

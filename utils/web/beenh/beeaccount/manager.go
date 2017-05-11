@@ -48,24 +48,24 @@ func NewAccountMgr(domain string, model AccountModel, pc beepermission.Permissio
 	return mgr
 }
 
-// GetLoginUserId get login user id
-func (a *AccountMgr) GetLoginUserId(c *context.Context) *UserId {
+// GetLoginUserID get login user id
+func (a *AccountMgr) GetLoginUserID(c *context.Context) *UserID {
 	ss := c.Input.CruSession
-	if userId, ok := ss.Get("LoginUser").(UserId); ok {
-		return &userId
+	if userID, ok := ss.Get("LoginUser").(UserID); ok {
+		return &userID
 	}
 	return nil
 }
 
 // CurrentAccount get current(login) account invoker
 func (a *AccountMgr) CurrentAccount(c *context.Context) *accountInvoker {
-	userId := a.GetLoginUserId(c)
-	return &accountInvoker{a.model, userId, userId, c, a}
+	userID := a.GetLoginUserID(c)
+	return &accountInvoker{a.model, userID, userID, c, a}
 }
 
 // OtherAccount get other account invoker
-func (a *AccountMgr) OtherAccount(c *context.Context, userId *UserId) *accountInvoker {
-	return &accountInvoker{a.model, a.GetLoginUserId(c), userId, c, a}
+func (a *AccountMgr) OtherAccount(c *context.Context, userID *UserID) *accountInvoker {
+	return &accountInvoker{a.model, a.GetLoginUserID(c), userID, c, a}
 }
 
 // Register register an account with account info
@@ -82,14 +82,14 @@ func (a *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	return a.model.Add(info)
 }
 
-// VerifyId verify account login id
-func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId string) error {
+// VerifyID verify account login id
+func (a *AccountMgr) VerifyID(c *context.Context, v *verify.Verifier, loginID string) error {
 	if v == nil {
 		return errors.New("invalid verifier")
 	}
 	vErr := v.Verify()
 	if vErr == nil {
-		userId, uidErr := a.GetUserId(c, loginId)
+		userID, uidErr := a.GetUserID(c, loginID)
 		if uidErr != nil {
 			return uidErr
 		}
@@ -97,33 +97,33 @@ func (a *AccountMgr) VerifyId(c *context.Context, v *verify.Verifier, loginId st
 		if schemaErr != nil {
 			return schemaErr
 		}
-		name, matchErr := accountSchema.MatchLoginId(loginId)
+		name, matchErr := accountSchema.MatchLoginID(loginID)
 		if matchErr != nil {
 			return matchErr
 		}
-		basicInfo, getAccountErr := a.model.GetAccountBasicInfo(userId.Uid)
+		basicInfo, getAccountErr := a.model.GetAccountBasicInfo(userID.Uid)
 		if getAccountErr != nil {
 			return getAccountErr
 		}
-		basicInfo.LoginIds[name] = NewLoginId(basicInfo.LoginIds[name].Id, true)
-		return a.model.UpdateAccountBasicInfo(userId.Uid, basicInfo)
+		basicInfo.LoginIDs[name] = NewLoginID(basicInfo.LoginIDs[name].ID, true)
+		return a.model.UpdateAccountBasicInfo(userID.Uid, basicInfo)
 	}
 	return errors.New("invalid token")
 }
 
 // ResetPwd reset password
-func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId string, newPwd *LoginPwd) error {
+func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginID string, newPwd *LoginPwd) error {
 	if v == nil {
 		return errors.New("invalid verifier")
 	}
 	vErr := v.Verify()
 	if vErr == nil {
-		userId, uidErr := a.GetUserId(c, loginId)
+		userID, uidErr := a.GetUserID(c, loginID)
 		if uidErr != nil {
 			return errors.New("unknown account")
 		}
 
-		AccountBasicInfo, accountErr := a.model.GetAccountBasicInfo(userId.Uid)
+		AccountBasicInfo, accountErr := a.model.GetAccountBasicInfo(userID.Uid)
 		if accountErr != nil {
 			return accountErr
 		}
@@ -131,33 +131,33 @@ func (a *AccountMgr) ResetPwd(c *context.Context, v *verify.Verifier, loginId st
 		newPwdRaw, newPwdErr := newPwd.GetPwd()
 		if newPwdErr == nil {
 			AccountBasicInfo.Password.SetEncryptedPwd(newPwdRaw)
-			return a.model.UpdateAccountBasicInfo(userId.Uid, AccountBasicInfo)
+			return a.model.UpdateAccountBasicInfo(userID.Uid, AccountBasicInfo)
 		}
 	}
 	return errors.New("invalid token")
 }
 
-// GetUserId get user id by login string
+// GetUserID get user id by login string
 // Universal Interface, can be called without login
-func (a *AccountMgr) GetUserId(c *context.Context, loginId string) (*UserId, error) {
+func (a *AccountMgr) GetUserID(c *context.Context, loginID string) (*UserID, error) {
 	accountSchema, schemaErr := GetAccountSchema(a.domain)
 	if schemaErr != nil {
 		return nil, schemaErr
 	}
-	name, matchErr := accountSchema.MatchLoginId(loginId)
+	name, matchErr := accountSchema.MatchLoginID(loginID)
 	if matchErr != nil {
 		return nil, matchErr
 	}
-	return a.model.GetUserId(name, loginId)
+	return a.model.GetUserID(name, loginID)
 }
 
 // Login login an account with password
-func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) error {
-	userId, findErr := a.GetUserId(c, loginId)
+func (a *AccountMgr) Login(c *context.Context, loginID string, pwd *LoginPwd) error {
+	userID, findErr := a.GetUserID(c, loginID)
 	if findErr != nil {
 		return errors.New("invalid user id")
 	}
-	basicInfo, accountErr := a.model.GetAccountBasicInfo(userId.Uid)
+	basicInfo, accountErr := a.model.GetAccountBasicInfo(userID.Uid)
 	if accountErr != nil {
 		return accountErr
 	}
@@ -165,11 +165,11 @@ func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) er
 	if schemaErr != nil {
 		return schemaErr
 	}
-	name, matchErr := accountSchema.MatchLoginId(loginId)
+	name, matchErr := accountSchema.MatchLoginID(loginID)
 	if matchErr != nil {
 		return matchErr
 	}
-	if !basicInfo.LoginIds[name].Verified {
+	if !basicInfo.LoginIDs[name].Verified {
 		return errors.New("account id not verified")
 	}
 	LoginPwd, pwdErr := basicInfo.Password.GetPwd()
@@ -182,6 +182,6 @@ func (a *AccountMgr) Login(c *context.Context, loginId string, pwd *LoginPwd) er
 		return pwdErr
 	}
 	ss := c.Input.CruSession
-	ss.Set("LoginUser", basicInfo.UserId)
+	ss.Set("LoginUser", basicInfo.UserID)
 	return nil
 }

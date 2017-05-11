@@ -42,10 +42,10 @@ func (u *UserModel) Add(accountInfo *beeaccount.AccountInfo) error {
 	o := orm.NewOrm()
 	user := new(User)
 	user.Uid = accountInfo.Uid
-	user.Username = accountInfo.LoginIds["UserName"].Id
-	user.Email = accountInfo.LoginIds["Email"].Id
-	user.EmailVerified = accountInfo.LoginIds["Email"].Verified
-	user.Mobile = accountInfo.LoginIds["Mobile"].Id
+	user.Username = accountInfo.LoginIDs["UserName"].ID
+	user.Email = accountInfo.LoginIDs["Email"].ID
+	user.EmailVerified = accountInfo.LoginIDs["Email"].Verified
+	user.Mobile = accountInfo.LoginIDs["Mobile"].ID
 	user.Regtime = time.Now().Format("2006-01-02 15:04:05")
 	user.Password, _ = accountInfo.Password.GetPwd()
 
@@ -57,29 +57,29 @@ func (u *UserModel) Delete(uid string) error {
 	return errors.New("not supported")
 }
 
-func (u *UserModel) GetUserId(idName string, loginId string) (*beeaccount.UserId, error) {
+func (u *UserModel) GetUserID(idName string, loginID string) (*beeaccount.UserID, error) {
 	user := User{}
 	var column string
 	switch idName {
 	case "UserName":
 		column = "UserName"
-		user.Username = loginId
+		user.Username = loginID
 	case "Email":
 		column = "Email"
-		user.Email = loginId
+		user.Email = loginID
 	case "Mobile":
 		column = "Mobile"
-		user.Mobile = loginId
+		user.Mobile = loginID
 	default:
 		return nil, errors.New(idName + "not found")
 	}
-	fmt.Println(column + "::" + loginId)
+	fmt.Println(column + "::" + loginID)
 	o := orm.NewOrm()
 	readErr := o.Read(&user, column)
 	if readErr != nil {
 		return nil, readErr
 	}
-	return &beeaccount.UserId{"", "", user.Uid}, nil
+	return &beeaccount.UserID{"", "", user.Uid}, nil
 }
 
 func (u *UserModel) GetAccountInfo(uid string) (*beeaccount.AccountInfo, error) {
@@ -94,9 +94,9 @@ func (u *UserModel) GetAccountInfo(uid string) (*beeaccount.AccountInfo, error) 
 	}
 	accountInfo, _ := beeaccount.NewAccountInfo("23333")
 	accountInfo.Uid = user.Uid
-	accountInfo.LoginIds["UserName"] = beeaccount.NewLoginId(user.Username)
-	accountInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
-	accountInfo.LoginIds["Mobile"] = beeaccount.NewLoginId(user.Mobile)
+	accountInfo.LoginIDs["UserName"] = beeaccount.NewLoginID(user.Username)
+	accountInfo.LoginIDs["Email"] = beeaccount.NewLoginID(user.Email, user.EmailVerified)
+	accountInfo.LoginIDs["Mobile"] = beeaccount.NewLoginID(user.Mobile)
 	accountInfo.Password.SetEncryptedPwd(user.Password)
 	return accountInfo, nil
 }
@@ -113,15 +113,15 @@ func (u *UserModel) GetAccountBasicInfo(uid string) (*beeaccount.AccountBasicInf
 	}
 	accountBaseInfo := beeaccount.NewAccountBasicInfo("23333")
 	accountBaseInfo.Uid = user.Uid
-	accountBaseInfo.LoginIds["UserName"] = beeaccount.NewLoginId(user.Username)
-	accountBaseInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email)
-	accountBaseInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email, user.EmailVerified)
-	accountBaseInfo.LoginIds["Mobile"] = beeaccount.NewLoginId(user.Mobile)
+	accountBaseInfo.LoginIDs["UserName"] = beeaccount.NewLoginID(user.Username)
+	accountBaseInfo.LoginIDs["Email"] = beeaccount.NewLoginID(user.Email)
+	accountBaseInfo.LoginIDs["Email"] = beeaccount.NewLoginID(user.Email, user.EmailVerified)
+	accountBaseInfo.LoginIDs["Mobile"] = beeaccount.NewLoginID(user.Mobile)
 	accountBaseInfo.Password.SetEncryptedPwd(user.Password)
 	return accountBaseInfo, nil
 }
 
-func (u *UserModel) GetOAuth2Id(uid string) (map[string]string, error) {
+func (u *UserModel) GetOAuth2ID(uid string) (map[string]string, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -141,17 +141,17 @@ func (u *UserModel) UpdateAccountBasicInfo(uid string, baseInfo *beeaccount.Acco
 	user := new(User)
 	user.Uid = baseInfo.Uid
 	o.Read(user)
-	user.Username = baseInfo.LoginIds["UserName"].Id
-	user.Email = baseInfo.LoginIds["Email"].Id
-	user.EmailVerified = baseInfo.LoginIds["Email"].Verified
-	user.Mobile = baseInfo.LoginIds["Mobile"].Id
+	user.Username = baseInfo.LoginIDs["UserName"].ID
+	user.Email = baseInfo.LoginIDs["Email"].ID
+	user.EmailVerified = baseInfo.LoginIDs["Email"].Verified
+	user.Mobile = baseInfo.LoginIDs["Mobile"].ID
 	user.Password, _ = baseInfo.Password.GetPwd()
 	fmt.Println(user)
 	_, err := o.Update(user)
 	return err
 }
 
-func (u *UserModel) UpdateOAuth2Id(uid string, ids map[string]string) error {
+func (u *UserModel) UpdateOAuth2ID(uid string, ids map[string]string) error {
 	return errors.New("not implemented")
 }
 

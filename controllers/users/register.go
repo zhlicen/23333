@@ -29,11 +29,11 @@ func (c *RegisterController) Post() {
 	mobile := c.GetString("mobile")
 	email := c.GetString("email")
 	accountInfo.Domain = beego.BConfig.AppName
-	accountInfo.LoginIds[UserName] = beeaccount.NewLoginId(username)
+	accountInfo.LoginIDs[UserName] = beeaccount.NewLoginID(username)
 	fmt.Println("UserName:" + username)
-	accountInfo.LoginIds[Mobile] = beeaccount.NewLoginId(mobile)
+	accountInfo.LoginIDs[Mobile] = beeaccount.NewLoginID(mobile)
 	fmt.Println("Mobile:" + mobile)
-	accountInfo.LoginIds[Email] = beeaccount.NewLoginId(email)
+	accountInfo.LoginIDs[Email] = beeaccount.NewLoginID(email)
 	fmt.Println("Email:" + email)
 
 	setErr := accountInfo.Password.SetPwd("23333", password, accountInfo.Uid, pwdEncryptorSalt)

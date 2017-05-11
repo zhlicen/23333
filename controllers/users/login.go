@@ -12,7 +12,7 @@ type LoginController struct {
 }
 
 func (c *LoginController) Get() {
-	if AccountMgr.GetLoginUserId(c.Ctx) != nil {
+	if AccountMgr.GetLoginUserID(c.Ctx) != nil {
 		c.Ctx.Redirect(302, "/")
 		return
 	}
@@ -24,14 +24,14 @@ func (c *LoginController) Post() {
 	password := c.GetString("password")
 	fmt.Println("username:" + username)
 	fmt.Println("password:" + password)
-	userId, getErr := AccountMgr.GetUserId(c.Ctx, username)
+	userID, getErr := AccountMgr.GetUserID(c.Ctx, username)
 	if getErr != nil {
 		fmt.Println(getErr.Error())
 		c.Ctx.Redirect(302, "/login")
 		return
 	}
 	userPwd := new(beeaccount.LoginPwd)
-	userPwd.SetPwd("23333", password, userId.Uid, pwdEncryptorSalt)
+	userPwd.SetPwd("23333", password, userID.Uid, pwdEncryptorSalt)
 	loginErr := AccountMgr.Login(c.Ctx, username, userPwd)
 
 	if loginErr != nil {
@@ -40,6 +40,6 @@ func (c *LoginController) Post() {
 		return
 	}
 	accountInfo, _ := AccountMgr.CurrentAccount(c.Ctx).GetAccountBasicInfo()
-	c.SetSession("UserName", accountInfo.LoginIds[UserName].Id)
+	c.SetSession("UserName", accountInfo.LoginIDs[UserName].ID)
 	c.Ctx.Redirect(302, "/")
 }

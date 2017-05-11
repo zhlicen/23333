@@ -34,7 +34,7 @@ type SMTPVerifyService struct {
 	mailTpl             string
 	mailTplData         map[string]string
 	tokenTimeoutSeconds uint
-	tokenGenerator      idgen.IdGenerator
+	tokenGenerator      idgen.IDGenerator
 	tokenMap            map[string]smtpToken
 	lock                sync.RWMutex
 	smtpConfig          SMTPConfig
@@ -46,7 +46,7 @@ type SMTPVerifyService struct {
 // tokenGen is the generator of token
 // smtpConfig smtp configuration
 // returns the service constructed
-func NewSMTPVerifyService(mailTpl string, tokenTimeoutSeconds uint, tokenGen idgen.IdGenerator,
+func NewSMTPVerifyService(mailTpl string, tokenTimeoutSeconds uint, tokenGen idgen.IDGenerator,
 	smtpConfig SMTPConfig) *SMTPVerifyService {
 	vs := &SMTPVerifyService{mailTpl: mailTpl, tokenTimeoutSeconds: tokenTimeoutSeconds,
 		tokenGenerator: tokenGen, smtpConfig: smtpConfig}

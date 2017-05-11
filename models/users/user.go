@@ -92,7 +92,7 @@ func (u *UserModel) GetAccountInfo(uid string) (*beeaccount.AccountInfo, error) 
 		fmt.Println(readErr.Error())
 		return nil, readErr
 	}
-	accountInfo := beeaccount.NewAccountInfo("23333")
+	accountInfo, _ := beeaccount.NewAccountInfo("23333")
 	accountInfo.Uid = user.Uid
 	accountInfo.LoginIds["UserName"] = beeaccount.NewLoginId(user.Username)
 	accountInfo.LoginIds["Email"] = beeaccount.NewLoginId(user.Email, user.EmailVerified)

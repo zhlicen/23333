@@ -21,7 +21,7 @@ func (c *RegisterController) Get() {
 }
 
 func (c *RegisterController) Post() {
-	accountInfo := beeaccount.NewAccountInfo("23333")
+	accountInfo, _ := beeaccount.NewAccountInfo("23333")
 	accountInfo.Group = "customer"
 	accountInfo.GenRandomUid()
 	username := c.GetString("username")

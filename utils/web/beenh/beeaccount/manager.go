@@ -27,7 +27,7 @@ func GetAccountMgr(domain string) (*AccountMgr, error) {
 			return mgr, nil
 		}
 	}
-	return nil, errors.New("not exist")
+	return nil, errors.New(domain + " domain not exist")
 }
 
 // NewAccountMgr constructor of AccountMgr

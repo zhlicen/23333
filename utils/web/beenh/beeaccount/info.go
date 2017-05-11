@@ -137,13 +137,17 @@ type AccountInfo struct {
 }
 
 // NewAccountInfo constructor of AccountInfo
-func NewAccountInfo(domain string) *AccountInfo {
+func NewAccountInfo(domain string) (*AccountInfo, error) {
+	_, err := GetAccountSchema(domain)
+	if err != nil {
+		return nil, err
+	}
 	accountInfo := new(AccountInfo)
 	accountInfo.Domain = domain
 	accountInfo.LoginIds = make(map[string]LoginId)
 	accountInfo.Profiles = make(map[string]interface{})
 	accountInfo.Others = make(map[string]interface{})
-	return accountInfo
+	return accountInfo, nil
 }
 
 func mergeMaps(maps ...map[string]interface{}) map[string]interface{} {

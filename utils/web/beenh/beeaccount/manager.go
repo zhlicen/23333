@@ -11,6 +11,8 @@ import (
 // mgrsStrore managers storage
 var mgrsStore map[string]*AccountMgr
 
+const ssLoginUser = "beeaccountuser"
+
 // AccountMgr account manager
 // member:domain domain of this manager
 // member:pc permission checker of account actions
@@ -31,27 +33,27 @@ func GetAccountMgr(domain string) (*AccountMgr, error) {
 }
 
 // NewAccountMgr constructor of AccountMgr
-func NewAccountMgr(domain string, model AccountModel, pc beepermission.PermissionChecker) *AccountMgr {
+func NewAccountMgr(domain string, model AccountModel, pc beepermission.PermissionChecker) (*AccountMgr, error) {
 	if mgrsStore == nil {
 		mgrsStore = make(map[string]*AccountMgr)
 	} else {
+		if model == nil {
+			return nil, errors.New("model is nil")
+		}
 		if mgr, ok := mgrsStore[domain]; ok {
 			mgr.model = model
-			return mgr
+			return mgr, nil
 		}
-	}
-	if model == nil {
-		return nil
 	}
 	mgr := &AccountMgr{domain, model, pc}
 	mgrsStore[domain] = mgr
-	return mgr
+	return mgr, nil
 }
 
 // GetLoginUserID get login user id
 func (a *AccountMgr) GetLoginUserID(c *context.Context) *UserID {
 	ss := c.Input.CruSession
-	if userID, ok := ss.Get("LoginUser").(UserID); ok {
+	if userID, ok := ss.Get(ssLoginUser).(UserID); ok {
 		return &userID
 	}
 	return nil
@@ -71,7 +73,7 @@ func (a *AccountMgr) OtherAccount(c *context.Context, userID *UserID) *accountIn
 // Register register an account with account info
 func (a *AccountMgr) Register(c *context.Context, info *AccountInfo) error {
 	ss := c.Input.CruSession
-	ssUser := ss.Get("LoginUser")
+	ssUser := ss.Get(ssLoginUser)
 	if ssUser != nil {
 		return errors.New("account is logged in")
 	}
@@ -182,6 +184,11 @@ func (a *AccountMgr) Login(c *context.Context, loginID string, pwd *LoginPwd) er
 		return pwdErr
 	}
 	ss := c.Input.CruSession
-	ss.Set("LoginUser", basicInfo.UserID)
+	ss.Set(ssLoginUser, basicInfo.UserID)
 	return nil
+}
+
+// QueryFromModel send query to model directly
+func (a *AccountMgr) QueryFromModel(c *context.Context, query ModelQuery, param interface{}) (interface{}, error) {
+	return a.model.ModelQuery(query, param)
 }

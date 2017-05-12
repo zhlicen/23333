@@ -22,25 +22,10 @@ type accountInvoker struct {
 	mgr          *AccountMgr
 }
 
-// AccountAction account action
-type AccountAction int
-
-// Account Actions definition
-const (
-	Account_LogoutSession AccountAction = iota
-	Account_ChangePwd
-	Account_GetAccountBasicInfo
-	Account_UpdateAccountBasicInfo
-	Account_GetProfiles
-	Account_UpdateProfiles
-	Account_GetOthers
-	Account_UpdateOthers
-)
-
 // checkPermission check permission of this action
 func (a *accountInvoker) checkPermission(action AccountAction) error {
 	if a.mgr.pc != nil {
-		return a.mgr.pc.Check(a.loginUserID, a.invokeUserID, action)
+		return a.mgr.pc.Check(action, a.loginUserID, a.invokeUserID)
 	}
 	return nil
 }
@@ -48,7 +33,7 @@ func (a *accountInvoker) checkPermission(action AccountAction) error {
 // LogoutSession logout session with session id
 // sid is the id of session to be logged out
 func (a *accountInvoker) LogoutSession(sid string) error {
-	perErr := a.checkPermission(Account_LogoutSession)
+	perErr := a.checkPermission(ActionAccountLogoutSession)
 	if perErr != nil {
 		return perErr
 	}
@@ -69,7 +54,7 @@ func (a *accountInvoker) LogoutSession(sid string) error {
 		}
 	}
 
-	ssUser := ss.Get("LoginUser")
+	ssUser := ss.Get(ssLoginUser)
 	if ssUser == nil {
 		return errors.New("no login user with this session")
 	}
@@ -91,7 +76,7 @@ func (a *accountInvoker) LogoutSession(sid string) error {
 // newPwd is the new password
 // returns error
 func (a *accountInvoker) ChangePwd(oldPwd *LoginPwd, newPwd *LoginPwd) error {
-	perErr := a.checkPermission(Account_ChangePwd)
+	perErr := a.checkPermission(ActionAccountChangePwd)
 	if perErr != nil {
 		return perErr
 	}
@@ -115,7 +100,7 @@ func (a *accountInvoker) ChangePwd(oldPwd *LoginPwd, newPwd *LoginPwd) error {
 
 // GetAccountBasicInfo get account basic info
 func (a *accountInvoker) GetAccountBasicInfo() (*AccountBasicInfo, error) {
-	perErr := a.checkPermission(Account_GetAccountBasicInfo)
+	perErr := a.checkPermission(ActionAccountGetAccountBasicInfo)
 	if perErr != nil {
 		return nil, perErr
 	}
@@ -125,7 +110,7 @@ func (a *accountInvoker) GetAccountBasicInfo() (*AccountBasicInfo, error) {
 
 // UpdateAccountBasicInfo update account basic info
 func (a *accountInvoker) UpdateAccountBasicInfo(basicInfo *AccountBasicInfo) error {
-	perErr := a.checkPermission(Account_UpdateAccountBasicInfo)
+	perErr := a.checkPermission(ActionAccountUpdateAccountBasicInfo)
 	if perErr != nil {
 		return perErr
 	}
@@ -135,7 +120,7 @@ func (a *accountInvoker) UpdateAccountBasicInfo(basicInfo *AccountBasicInfo) err
 
 // GetProfiles get profiles
 func (a *accountInvoker) GetProfiles() (map[string]string, error) {
-	perErr := a.checkPermission(Account_GetProfiles)
+	perErr := a.checkPermission(ActionAccountGetProfiles)
 	if perErr != nil {
 		return nil, perErr
 	}
@@ -145,7 +130,7 @@ func (a *accountInvoker) GetProfiles() (map[string]string, error) {
 
 // UpdateProfiles update profiles
 func (a *accountInvoker) UpdateProfiles(profiles map[string]string) error {
-	perErr := a.checkPermission(Account_UpdateProfiles)
+	perErr := a.checkPermission(ActionAccountUpdateProfiles)
 	if perErr != nil {
 		return perErr
 	}
@@ -155,7 +140,7 @@ func (a *accountInvoker) UpdateProfiles(profiles map[string]string) error {
 
 // GetOthers get others
 func (a *accountInvoker) GetOthers() (map[string]string, error) {
-	perErr := a.checkPermission(Account_GetOthers)
+	perErr := a.checkPermission(ActionAccountGetOthers)
 	if perErr != nil {
 		return nil, perErr
 	}
@@ -165,7 +150,7 @@ func (a *accountInvoker) GetOthers() (map[string]string, error) {
 
 // UpdateOthers update others
 func (a *accountInvoker) UpdateOthers(others map[string]string) error {
-	perErr := a.checkPermission(Account_UpdateOthers)
+	perErr := a.checkPermission(ActionAccountUpdateOthers)
 	if perErr != nil {
 		return perErr
 	}

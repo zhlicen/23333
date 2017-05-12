@@ -20,9 +20,10 @@ func initAccountSchema() {
 }
 
 // loginIDSchema login id schema
-// member:isRequired if the id is required
-// member:needVerfied if the id needs be verified
-// member:validator validator for id string
+// member:Name name of this loginID
+// member:IsRequired if the id is required
+// member:NeedVerfied if the id needs be verified
+// member:Validator validator for id string
 type LoginIDSchema struct {
 	UserDataBase
 	Name         string
@@ -239,6 +240,7 @@ func (a *AccountSchema) getRequiredOptions() []string {
 	return options
 }
 
+// AccountSchemaMgr account schema manager
 var AccountSchemaMgr *accountSchemaMgr
 
 // accountSchemaMgr account schema manager

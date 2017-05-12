@@ -1,5 +1,7 @@
 package beeaccount
 
+type ModelQuery int
+
 // AccountModel model interface for account manager
 type AccountModel interface {
 	Add(accountInfo *AccountInfo) error
@@ -19,4 +21,6 @@ type AccountModel interface {
 	UpdateProfiles(uid string, profiles map[string]string) error
 	UpdateOthers(uid string, others map[string]string) error
 	UpdateAccountStatus(uid string, status *AccountStatus) error
+
+	ModelQuery(id ModelQuery, params ...interface{}) (interface{}, error)
 }
